@@ -79,7 +79,7 @@ export function DashboardView() {
     savePanels(updated);
   };
 
-  const onLayoutChange = (layout: { i: string; x: number; y: number; w: number; h: number }[]) => {
+  const onLayoutChange = (layout: readonly { i: string; x: number; y: number; w: number; h: number }[]) => {
     const updated = panels.map((panel) => {
       const item = layout.find((l) => l.i === panel.id);
       if (item) {
