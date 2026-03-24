@@ -1,0 +1,11 @@
+# Exclude from Azure Functions deployment package
+__pycache__
+*.pyc
+*.pyo
+.pytest_cache
+.ruff_cache
+.mypy_cache
+tests/
+requirements-dev.txt
+.env
+.env.*
