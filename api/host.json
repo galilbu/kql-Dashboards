@@ -1,0 +1,23 @@
+{
+  "version": "2.0",
+  "logging": {
+    "applicationInsights": {
+      "samplingSettings": {
+        "isEnabled": true,
+        "excludedTypes": "Request"
+      }
+    }
+  },
+  "extensions": {
+    "http": {
+      "routePrefix": "api"
+    }
+  },
+  "customHandler": {
+    "description": {
+      "defaultExecutablePath": "python",
+      "arguments": ["-m", "uvicorn", "function_app:app", "--host", "0.0.0.0", "--port", "%FUNCTIONS_CUSTOMHANDLER_PORT%"]
+    },
+    "enableForwardingHttpRequest": true
+  }
+}

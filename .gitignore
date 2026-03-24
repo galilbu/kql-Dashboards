@@ -1,0 +1,138 @@
+# ============================================================
+# Node / Frontend (React + Vite)
+# ============================================================
+node_modules/
+dist/
+dist-ssr/
+build/
+.cache/
+.parcel-cache/
+*.local
+
+# Vite
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+
+# ============================================================
+# Environment variables
+# ============================================================
+.env
+.env.local
+.env.*.local
+.env.development
+.env.test
+.env.production
+
+# ============================================================
+# Python / FastAPI Backend
+# ============================================================
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+.env/
+
+# Distribution / packaging
+*.egg-info/
+*.egg
+dist/
+build/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+.installed.cfg
+MANIFEST
+
+# Testing
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+nosetests.xml
+coverage.xml
+*.cover
+
+# Linting / formatting
+.ruff_cache/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pytype/
+
+# ============================================================
+# Azure Functions
+# ============================================================
+local.settings.json
+.python_packages/
+bin/
+obj/
+
+# Azure artifacts
+*.user
+appsettings.*.json
+
+# ============================================================
+# IDE
+# ============================================================
+
+# VS Code — keep .vscode/settings.json but ignore everything else
+.vscode/*
+!.vscode/settings.json
+
+# JetBrains (PyCharm, WebStorm, etc.)
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# ============================================================
+# OS
+# ============================================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+
+# ============================================================
+# Logs & runtime
+# ============================================================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ============================================================
+# Build artifacts / misc
+# ============================================================
+*.tsbuildinfo
+*.js.map
+*.css.map
+.eslintcache
+.stylelintcache
+*.snap

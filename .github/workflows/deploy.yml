@@ -1,0 +1,100 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  NODE_VERSION: '18'
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  build-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: cd frontend && npm ci
+
+      - name: Lint
+        run: cd frontend && npm run lint
+
+      - name: Audit dependencies
+        run: cd frontend && npm audit --audit-level=high
+        continue-on-error: true
+
+      - name: Build
+        run: cd frontend && npm run build
+        env:
+          VITE_TENANT_ID: ${{ secrets.TENANT_ID }}
+          VITE_CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          VITE_API_BASE_URL: /api
+
+      - name: Upload frontend artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist
+
+  build-api:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+          cache-dependency-path: api/requirements*.txt
+
+      - name: Install dependencies
+        run: |
+          cd api
+          pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Lint with ruff
+        run: cd api && ruff check .
+
+      - name: Format check with black
+        run: cd api && black --check .
+
+      - name: Audit dependencies
+        run: pip-audit -r api/requirements.txt
+        continue-on-error: true
+
+      - name: Run tests
+        run: cd api && python -m pytest tests/ -v
+
+  deploy:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [build-frontend, build-api]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download frontend artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist
+
+      - name: Deploy to Azure Static Web Apps
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: upload
+          app_location: frontend/dist
+          api_location: api
+          skip_app_build: true
