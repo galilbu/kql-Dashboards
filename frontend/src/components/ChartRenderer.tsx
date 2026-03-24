@@ -13,7 +13,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-import { QueryResult, Column } from '../types';
+import type { QueryResult, Column } from '../types';
 import { ResultsTable } from './ResultsTable';
 
 interface ChartRendererProps {
@@ -130,7 +130,7 @@ export function ChartRenderer({ result, chartType }: ChartRendererProps) {
             cx="50%"
             cy="50%"
             outerRadius="70%"
-            label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+            label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
           >
             {data.map((_, i) => (
               <Cell key={i} fill={COLORS[i % COLORS.length]} />

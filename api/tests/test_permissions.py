@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import patch, AsyncMock
+from unittest.mock import patch
 
 from services.permissions_service import grant_permission, revoke_permission, list_permissions
 

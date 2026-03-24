@@ -1,11 +1,12 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import GridLayout from 'react-grid-layout';
+import type { Layout } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
 
 import { api } from '../api/client';
 import { useAuth } from '../auth';
-import { Dashboard, PanelConfig } from '../types';
+import type { Dashboard, PanelConfig } from '../types';
 import { Panel } from '../components/Panel';
 import { ShareDialog } from '../components/ShareDialog';
 
@@ -79,7 +80,7 @@ export function DashboardView() {
     savePanels(updated);
   };
 
-  const onLayoutChange = (layout: GridLayout.Layout[]) => {
+  const onLayoutChange = (layout: Layout[]) => {
     const updated = panels.map((panel) => {
       const item = layout.find((l) => l.i === panel.id);
       if (item) {

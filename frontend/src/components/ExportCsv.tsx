@@ -1,4 +1,4 @@
-import { QueryResult } from '../types';
+import type { QueryResult } from '../types';
 
 interface ExportCsvProps {
   result: QueryResult;

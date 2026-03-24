@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { PanelConfig, QueryResult } from '../types';
+import type { PanelConfig, QueryResult } from '../types';
 import { KqlEditor } from './KqlEditor';
 import { ChartRenderer } from './ChartRenderer';
 import { ResultsTable } from './ResultsTable';

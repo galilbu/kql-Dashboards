@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
 import { useAuth } from '../auth';
-import { Dashboard } from '../types';
+import type { Dashboard } from '../types';
 
 export function DashboardList() {
   const [dashboards, setDashboards] = useState<Dashboard[]>([]);

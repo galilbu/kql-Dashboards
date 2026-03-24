@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '../api/client';
 import { useAuth } from '../auth';
-import { Permission, UserSearchResult } from '../types';
+import type { Permission, UserSearchResult } from '../types';
 
 interface ShareDialogProps {
   dashboardId: string;
