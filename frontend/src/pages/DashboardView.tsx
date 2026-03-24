@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import ReactGridLayout from 'react-grid-layout';
+import RGL from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
 
 import { api } from '../api/client';
@@ -8,6 +8,26 @@ import { useAuth } from '../auth';
 import type { Dashboard, PanelConfig } from '../types';
 import { Panel } from '../components/Panel';
 import { ShareDialog } from '../components/ShareDialog';
+
+interface LayoutItem {
+  i: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const GridLayout = RGL as unknown as React.ComponentType<{
+  className?: string;
+  layout: LayoutItem[];
+  cols: number;
+  rowHeight: number;
+  width: number;
+  onLayoutChange?: (layout: LayoutItem[]) => void;
+  draggableHandle?: string;
+  children: React.ReactNode;
+}>;
 
 export function DashboardView() {
   const { id } = useParams<{ id: string }>();
@@ -79,7 +99,7 @@ export function DashboardView() {
     savePanels(updated);
   };
 
-  const onLayoutChange = (layout: readonly { i: string; x: number; y: number; w: number; h: number }[]) => {
+  const onLayoutChange = (layout: LayoutItem[]) => {
     const updated = panels.map((panel) => {
       const item = layout.find((l) => l.i === panel.id);
       if (item) {
@@ -160,7 +180,7 @@ export function DashboardView() {
 
       {showShare && <ShareDialog dashboardId={id!} onClose={() => setShowShare(false)} />}
 
-      <ReactGridLayout
+      <GridLayout
         className="layout"
         layout={panels.map((p) => ({ i: p.id, x: p.x, y: p.y, w: p.w, h: p.h }))}
         cols={12}
@@ -179,7 +199,7 @@ export function DashboardView() {
             />
           </div>
         ))}
-      </ReactGridLayout>
+      </GridLayout>
     </div>
   );
 }
