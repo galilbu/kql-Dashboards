@@ -94,7 +94,7 @@ jobs:
         env:
           SKIP_PYTHON_BUILD: true        # prevent Oryx bundling pip packages locally
         with:
-          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_HAPPY_DESERT_01CE1A503 }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: upload
           app_location: frontend/dist
