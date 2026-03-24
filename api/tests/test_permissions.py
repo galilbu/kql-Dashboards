@@ -1,13 +1,18 @@
 import pytest
 from unittest.mock import patch
 
-from services.permissions_service import grant_permission, revoke_permission, list_permissions
+from services.permissions_service import (
+    grant_permission,
+    revoke_permission,
+    list_permissions,
+)
 
 
 @pytest.fixture
 def mock_table():
     with patch("services.permissions_service.get_table_client") as mock:
         from unittest.mock import MagicMock
+
         table = MagicMock()
         mock.return_value = table
         yield table
@@ -31,6 +36,7 @@ async def test_revoke_permission_success(mock_table):
 @pytest.mark.asyncio
 async def test_revoke_permission_not_found(mock_table):
     from azure.core.exceptions import ResourceNotFoundError
+
     mock_table.delete_entity.side_effect = ResourceNotFoundError("Not found")
     result = await revoke_permission("dash-1", "user-1")
     assert result is False

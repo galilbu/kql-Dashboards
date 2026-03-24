@@ -2,7 +2,6 @@ from fastapi import Depends, HTTPException
 
 from middleware.auth import AuthenticatedUser, get_current_user
 
-
 ROLE_RANK = {"viewer": 1, "editor": 2, "admin": 3}
 
 

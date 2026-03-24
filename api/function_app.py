@@ -26,7 +26,9 @@ app = FastAPI(title="KQL Dashboard API", version="0.1.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.FRONTEND_ORIGIN] if settings.ENVIRONMENT == "production" else ["*"],
+    allow_origins=(
+        [settings.FRONTEND_ORIGIN] if settings.ENVIRONMENT == "production" else ["*"]
+    ),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -71,7 +71,9 @@ async def get_dashboard(dashboard_id: str) -> Optional[Dashboard]:
         return None
 
 
-async def update_dashboard(dashboard_id: str, data: DashboardUpdate) -> Optional[Dashboard]:
+async def update_dashboard(
+    dashboard_id: str, data: DashboardUpdate
+) -> Optional[Dashboard]:
     table = get_table_client(TABLE_NAME)
     try:
         entity = table.get_entity(partition_key="dashboard", row_key=dashboard_id)

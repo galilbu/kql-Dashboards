@@ -44,7 +44,9 @@ async def execute_kql(kql: str, workspace_id: str | None = None) -> dict[str, An
             server_timeout=timedelta(seconds=60),
         )
     except HttpResponseError as e:
-        logger.error("kql_query_failed", error_code=e.error.code if e.error else "unknown")
+        logger.error(
+            "kql_query_failed", error_code=e.error.code if e.error else "unknown"
+        )
         raise
 
     if response.status == LogsQueryStatus.SUCCESS:

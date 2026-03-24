@@ -79,6 +79,7 @@ async def test_delete_dashboard_success(mock_table):
 @pytest.mark.asyncio
 async def test_delete_dashboard_not_found(mock_table):
     from azure.core.exceptions import ResourceNotFoundError
+
     mock_table.delete_entity.side_effect = ResourceNotFoundError("Not found")
     result = await delete_dashboard("abc-123")
     assert result is False

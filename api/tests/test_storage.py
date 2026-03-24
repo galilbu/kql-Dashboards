@@ -42,7 +42,9 @@ async def test_get_dashboard_not_found(mock_table):
 @pytest.mark.asyncio
 async def test_grant_permission(mock_table):
     """Granting a permission should upsert the entity."""
-    with patch("services.permissions_service.get_table_client", return_value=mock_table):
+    with patch(
+        "services.permissions_service.get_table_client", return_value=mock_table
+    ):
         result = await grant_permission("dash-1", "user-1", "editor", "admin-1")
 
     assert result.dashboard_id == "dash-1"
@@ -58,7 +60,9 @@ async def test_get_user_permission_not_found(mock_table):
 
     mock_table.get_entity.side_effect = ResourceNotFoundError("Not found")
 
-    with patch("services.permissions_service.get_table_client", return_value=mock_table):
+    with patch(
+        "services.permissions_service.get_table_client", return_value=mock_table
+    ):
         result = await get_user_permission("dash-1", "user-1")
 
     assert result is None

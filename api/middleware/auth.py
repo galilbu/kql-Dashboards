@@ -97,7 +97,9 @@ async def get_current_user(request: Request) -> AuthenticatedUser:
     # Extract Bearer token
     auth_header = request.headers.get("Authorization")
     if not auth_header or not auth_header.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Missing or invalid authorization header")
+        raise HTTPException(
+            status_code=401, detail="Missing or invalid authorization header"
+        )
 
     token = auth_header.removeprefix("Bearer ")
 

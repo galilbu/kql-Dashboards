@@ -91,13 +91,11 @@ jobs:
 
       - name: Deploy to Azure Static Web Apps
         uses: Azure/static-web-apps-deploy@v1
-        env:
-          SKIP_PYTHON_BUILD: true        # prevent Oryx bundling pip packages locally
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_HAPPY_DESERT_01CE1A503 }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: upload
           app_location: frontend/dist
-          output_location: ''            # dist is already the built output
-          api_location: api
+          output_location: ''
+          api_location: ''               # skip API — deploy separately to Azure Functions
           skip_app_build: true

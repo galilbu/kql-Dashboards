@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import GridLayout from 'react-grid-layout';
+import ReactGridLayout from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
 
 import { api } from '../api/client';
@@ -79,7 +79,7 @@ export function DashboardView() {
     savePanels(updated);
   };
 
-  const onLayoutChange = (layout: GridLayout.Layout[]) => {
+  const onLayoutChange = (layout: ReactGridLayout.Layout[]) => {
     const updated = panels.map((panel) => {
       const item = layout.find((l) => l.i === panel.id);
       if (item) {
@@ -160,7 +160,7 @@ export function DashboardView() {
 
       {showShare && <ShareDialog dashboardId={id!} onClose={() => setShowShare(false)} />}
 
-      <GridLayout
+      <ReactGridLayout
         className="layout"
         layout={panels.map((p) => ({ i: p.id, x: p.x, y: p.y, w: p.w, h: p.h }))}
         cols={12}
@@ -179,7 +179,7 @@ export function DashboardView() {
             />
           </div>
         ))}
-      </GridLayout>
+      </ReactGridLayout>
     </div>
   );
 }

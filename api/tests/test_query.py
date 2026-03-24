@@ -5,7 +5,10 @@ from routes.query import QueryRequest
 
 
 def test_valid_query():
-    req = QueryRequest(kql="SecurityAlert | take 10", dashboard_id="550e8400-e29b-41d4-a716-446655440000")
+    req = QueryRequest(
+        kql="SecurityAlert | take 10",
+        dashboard_id="550e8400-e29b-41d4-a716-446655440000",
+    )
     assert req.kql == "SecurityAlert | take 10"
 
 
@@ -21,7 +24,9 @@ def test_whitespace_only_query_rejected():
 
 def test_query_too_long_rejected():
     with pytest.raises(ValidationError):
-        QueryRequest(kql="x" * 10_001, dashboard_id="550e8400-e29b-41d4-a716-446655440000")
+        QueryRequest(
+            kql="x" * 10_001, dashboard_id="550e8400-e29b-41d4-a716-446655440000"
+        )
 
 
 def test_externaldata_blocked():
