@@ -17,7 +17,6 @@ interface LayoutItem {
   h: number;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const GridLayout = RGL as unknown as React.ComponentType<{
   className?: string;
   layout: LayoutItem[];

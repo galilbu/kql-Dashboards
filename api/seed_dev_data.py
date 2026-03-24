@@ -10,16 +10,16 @@ Usage:
 import uuid
 from datetime import datetime, timezone
 
-from dotenv import load_dotenv
-
-load_dotenv()
-
-from services.table_storage import get_table_client
-
 DEV_USER_OID = "dev-user-00000000-0000-0000-0000-000000000001"
 
 
 def seed():
+    from dotenv import load_dotenv
+
+    load_dotenv()
+
+    from services.table_storage import get_table_client
+
     now = datetime.now(timezone.utc).isoformat()
     dashboard_id = str(uuid.uuid4())
 

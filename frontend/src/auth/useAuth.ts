@@ -8,82 +8,75 @@ const DEV_USER_OID =
   import.meta.env.VITE_DEV_USER_OID || 'dev-user-00000000-0000-0000-0000-000000000001';
 const DEV_USER_NAME = import.meta.env.VITE_DEV_USER_NAME || 'Test Admin';
 
-function useDevAuth() {
-  return {
-    isAuthenticated: true,
-    account: null,
-    user: {
-      name: DEV_USER_NAME,
-      username: 'dev@localhost',
-      oid: DEV_USER_OID,
-    },
-    login: async () => {},
-    logout: async () => {
-      window.location.reload();
-    },
-    getAccessToken: async () => 'dev-token',
-  };
-}
+const devAuthValue = {
+  isAuthenticated: true,
+  account: null,
+  user: {
+    name: DEV_USER_NAME,
+    username: 'dev@localhost',
+    oid: DEV_USER_OID,
+  },
+  login: async () => {},
+  logout: async () => {
+    window.location.reload();
+  },
+  getAccessToken: async () => 'dev-token',
+};
 
-function useMsalAuth() {
-  const { instance, accounts } = useMsal();
-  const isAuthenticated = useIsAuthenticated();
-  const account = useAccount(accounts[0] || null);
+export const useAuth = DEV_MODE
+  ? () => devAuthValue
+  : () => {
+      const { instance, accounts } = useMsal();
+      const isAuthenticated = useIsAuthenticated();
+      const account = useAccount(accounts[0] || null);
 
-  const login = useCallback(async () => {
-    try {
-      await instance.loginPopup(loginRequest);
-    } catch (error) {
-      console.error('Login failed:', error);
-    }
-  }, [instance]);
+      const login = useCallback(async () => {
+        try {
+          await instance.loginPopup(loginRequest);
+        } catch (error) {
+          console.error('Login failed:', error);
+        }
+      }, [instance]);
 
-  const logout = useCallback(async () => {
-    await instance.logoutPopup({
-      postLogoutRedirectUri: window.location.origin,
-    });
-  }, [instance]);
-
-  const getAccessToken = useCallback(
-    async (scopes: string[]) => {
-      if (!account) throw new Error('No active account');
-
-      try {
-        const response = await instance.acquireTokenSilent({
-          scopes,
-          account,
+      const logout = useCallback(async () => {
+        await instance.logoutPopup({
+          postLogoutRedirectUri: window.location.origin,
         });
-        return response.accessToken;
-      } catch (error) {
-        if (error instanceof InteractionRequiredAuthError) {
-          const response = await instance.acquireTokenPopup({ scopes });
-          return response.accessToken;
-        }
-        throw error;
-      }
-    },
-    [instance, account],
-  );
+      }, [instance]);
 
-  return {
-    isAuthenticated,
-    account,
-    user: account
-      ? {
-          name: account.name || '',
-          username: account.username || '',
-          oid: account.localAccountId || '',
-        }
-      : null,
-    login,
-    logout,
-    getAccessToken,
-  };
-}
+      const getAccessToken = useCallback(
+        async (scopes: string[]) => {
+          if (!account) throw new Error('No active account');
 
-export function useAuth() {
-  if (DEV_MODE) {
-    return useDevAuth();
-  }
-  return useMsalAuth();
-}
+          try {
+            const response = await instance.acquireTokenSilent({
+              scopes,
+              account,
+            });
+            return response.accessToken;
+          } catch (error) {
+            if (error instanceof InteractionRequiredAuthError) {
+              const response = await instance.acquireTokenPopup({ scopes });
+              return response.accessToken;
+            }
+            throw error;
+          }
+        },
+        [instance, account],
+      );
+
+      return {
+        isAuthenticated,
+        account,
+        user: account
+          ? {
+              name: account.name || '',
+              username: account.username || '',
+              oid: account.localAccountId || '',
+            }
+          : null,
+        login,
+        logout,
+        getAccessToken,
+      };
+    };
