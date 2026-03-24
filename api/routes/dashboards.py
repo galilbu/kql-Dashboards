@@ -3,7 +3,6 @@ from fastapi import APIRouter, Depends, HTTPException
 from middleware.auth import AuthenticatedUser, get_current_user
 from middleware.rbac import require_role
 from services.dashboard_service import (
-    Dashboard,
     DashboardCreate,
     DashboardUpdate,
     create_dashboard,

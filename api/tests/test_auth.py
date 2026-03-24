@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import patch, MagicMock
 from fastapi import HTTPException
 
-from middleware.auth import get_current_user, AuthenticatedUser
+from middleware.auth import get_current_user
 
 
 @pytest.fixture

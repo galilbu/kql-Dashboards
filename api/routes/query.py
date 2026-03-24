@@ -7,7 +7,7 @@ from pydantic import BaseModel, field_validator
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
-from middleware.auth import AuthenticatedUser, get_current_user
+from middleware.auth import AuthenticatedUser
 from middleware.rbac import require_role
 from services.log_analytics import execute_kql
 from utils import validate_uuid

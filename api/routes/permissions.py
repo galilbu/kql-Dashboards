@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 
-from middleware.auth import AuthenticatedUser, get_current_user
+from middleware.auth import AuthenticatedUser
 from middleware.rbac import require_role
 from services.permissions_service import (
     PermissionGrant,
