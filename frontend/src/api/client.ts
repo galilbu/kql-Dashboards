@@ -1,4 +1,6 @@
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
+const DEV_MODE = import.meta.env.VITE_DEV_MODE === 'true';
+const DEV_USER_OID = import.meta.env.VITE_DEV_USER_OID || 'dev-user-00000000-0000-0000-0000-000000000001';
 
 type RequestOptions = {
   method?: string;
@@ -13,7 +15,9 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
     'Content-Type': 'application/json',
   };
 
-  if (token) {
+  if (DEV_MODE) {
+    headers['X-Dev-User-OID'] = DEV_USER_OID;
+  } else if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
 

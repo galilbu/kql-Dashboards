@@ -1,13 +1,31 @@
 import { useCallback } from 'react';
-import {
-  useMsal,
-  useIsAuthenticated,
-  useAccount,
-} from '@azure/msal-react';
+import { useMsal, useIsAuthenticated, useAccount } from '@azure/msal-react';
 import { InteractionRequiredAuthError } from '@azure/msal-browser';
 import { loginRequest } from './msalConfig';
 
-export function useAuth() {
+const DEV_MODE = import.meta.env.VITE_DEV_MODE === 'true';
+const DEV_USER_OID =
+  import.meta.env.VITE_DEV_USER_OID || 'dev-user-00000000-0000-0000-0000-000000000001';
+const DEV_USER_NAME = import.meta.env.VITE_DEV_USER_NAME || 'Test Admin';
+
+function useDevAuth() {
+  return {
+    isAuthenticated: true,
+    account: null,
+    user: {
+      name: DEV_USER_NAME,
+      username: 'dev@localhost',
+      oid: DEV_USER_OID,
+    },
+    login: async () => {},
+    logout: async () => {
+      window.location.reload();
+    },
+    getAccessToken: async () => 'dev-token',
+  };
+}
+
+function useMsalAuth() {
   const { instance, accounts } = useMsal();
   const isAuthenticated = useIsAuthenticated();
   const account = useAccount(accounts[0] || null);
@@ -61,4 +79,11 @@ export function useAuth() {
     logout,
     getAccessToken,
   };
+}
+
+export function useAuth() {
+  if (DEV_MODE) {
+    return useDevAuth();
+  }
+  return useMsalAuth();
 }

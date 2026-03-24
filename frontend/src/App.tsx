@@ -6,22 +6,33 @@ import { Layout } from './components/Layout';
 import { DashboardList } from './pages/DashboardList';
 import { DashboardView } from './pages/DashboardView';
 
-const msalInstance = new PublicClientApplication(msalConfig);
+const DEV_MODE = import.meta.env.VITE_DEV_MODE === 'true';
+const msalInstance = DEV_MODE ? null : new PublicClientApplication(msalConfig);
+
+function AppRoutes() {
+  return (
+    <BrowserRouter>
+      <AuthGuard>
+        <Layout>
+          <Routes>
+            <Route path="/dashboards" element={<DashboardList />} />
+            <Route path="/dashboards/:id" element={<DashboardView />} />
+            <Route path="*" element={<Navigate to="/dashboards" replace />} />
+          </Routes>
+        </Layout>
+      </AuthGuard>
+    </BrowserRouter>
+  );
+}
 
 function App() {
+  if (DEV_MODE) {
+    return <AppRoutes />;
+  }
+
   return (
-    <MsalProvider instance={msalInstance}>
-      <BrowserRouter>
-        <AuthGuard>
-          <Layout>
-            <Routes>
-              <Route path="/dashboards" element={<DashboardList />} />
-              <Route path="/dashboards/:id" element={<DashboardView />} />
-              <Route path="*" element={<Navigate to="/dashboards" replace />} />
-            </Routes>
-          </Layout>
-        </AuthGuard>
-      </BrowserRouter>
+    <MsalProvider instance={msalInstance!}>
+      <AppRoutes />
     </MsalProvider>
   );
 }
