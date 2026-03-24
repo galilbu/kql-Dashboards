@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
 import { useAuth } from '../auth';
@@ -13,7 +13,7 @@ export function DashboardList() {
   const { getAccessToken } = useAuth();
   const navigate = useNavigate();
 
-  const fetchDashboards = async () => {
+  const fetchDashboards = useCallback(async () => {
     try {
       const token = await getAccessToken(['openid']);
       const data = await api.get<{ dashboards: Dashboard[] }>('/dashboards', token);
@@ -23,11 +23,11 @@ export function DashboardList() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [getAccessToken]);
 
   useEffect(() => {
     fetchDashboards();
-  }, []);
+  }, [fetchDashboards]);
 
   const handleCreate = async () => {
     if (!newTitle.trim()) return;

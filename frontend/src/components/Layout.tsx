@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../auth';
 
 interface LayoutProps {
@@ -8,7 +8,6 @@ interface LayoutProps {
 
 export function Layout({ children }: LayoutProps) {
   const { user, logout } = useAuth();
-  const navigate = useNavigate();
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>

@@ -45,9 +45,9 @@ function inferChartType(columns: Column[]): 'line' | 'bar' | 'pie' | 'table' {
   return 'table';
 }
 
-function toChartData(result: QueryResult): Record<string, any>[] {
+function toChartData(result: QueryResult): Record<string, string | number | boolean | null>[] {
   return result.rows.map((row) => {
-    const obj: Record<string, any> = {};
+    const obj: Record<string, string | number | boolean | null> = {};
     result.columns.forEach((col, i) => {
       obj[col.name] = row[i];
     });

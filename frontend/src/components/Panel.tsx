@@ -33,8 +33,8 @@ export function Panel({ panel, dashboardId, onUpdate, onRemove }: PanelProps) {
       );
       setResult(data);
       setEditing(false);
-    } catch (err: any) {
-      setError(err.message || 'Query failed');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Query failed');
     } finally {
       setLoading(false);
     }

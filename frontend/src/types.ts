@@ -5,7 +5,7 @@ export interface Column {
 
 export interface QueryResult {
   columns: Column[];
-  rows: any[][];
+  rows: (string | number | boolean | null)[][];
   partial?: boolean;
 }
 
