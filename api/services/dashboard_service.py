@@ -117,3 +117,10 @@ async def list_dashboards_for_user(dashboard_ids: list[str]) -> list[Dashboard]:
         except ResourceNotFoundError:
             continue
     return dashboards
+
+
+async def list_all_dashboards() -> list[Dashboard]:
+    """List all dashboards. Used by super admins."""
+    table = get_table_client(TABLE_NAME)
+    entities = table.query_entities("PartitionKey eq 'dashboard'")
+    return [_entity_to_dashboard(e) for e in entities]

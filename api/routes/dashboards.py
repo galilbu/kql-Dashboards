@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 
 from middleware.auth import AuthenticatedUser, get_current_user
-from middleware.rbac import require_role
+from middleware.rbac import is_super_admin, require_role
 from services.dashboard_service import (
     DashboardCreate,
     DashboardUpdate,
@@ -9,6 +9,7 @@ from services.dashboard_service import (
     get_dashboard,
     update_dashboard,
     delete_dashboard,
+    list_all_dashboards,
     list_dashboards_for_user,
 )
 from services.permissions_service import (
@@ -26,9 +27,12 @@ router = APIRouter(tags=["dashboards"])
 async def list_dashboards(
     user: AuthenticatedUser = Depends(get_current_user),
 ):
-    """List all dashboards the current user has access to."""
-    dashboard_ids = await list_user_dashboard_ids(user.oid)
-    dashboards = await list_dashboards_for_user(dashboard_ids)
+    """List all dashboards the current user has access to. Super admins see all."""
+    if is_super_admin(user.oid):
+        dashboards = await list_all_dashboards()
+    else:
+        dashboard_ids = await list_user_dashboard_ids(user.oid)
+        dashboards = await list_dashboards_for_user(dashboard_ids)
     return {"dashboards": [d.model_dump() for d in dashboards]}
 
 
