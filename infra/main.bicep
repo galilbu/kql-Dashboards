@@ -1,7 +1,7 @@
 targetScope = 'resourceGroup'
 
-@description('Base name for all resources')
-param baseName string = 'kqldash'
+@description('Base name prefix for new resources (matches existing secopskqldash* naming)')
+param baseName string = 'secopskqldash'
 
 @description('Location for all resources')
 param location string = resourceGroup().location
@@ -16,60 +16,32 @@ param clientId string
 @description('Entra ID app client secret')
 param clientSecret string
 
-@description('Log Analytics workspace ID for KQL queries')
+@description('Log Analytics workspace ID (GUID) for KQL queries')
 param workspaceId string
 
-@description('Log Analytics workspace resource ID (for RBAC assignment)')
+@description('Log Analytics workspace resource ID (full ARM ID, for RBAC assignment)')
 param workspaceResourceId string
 
 @secure()
-@description('Secret for signing local JWTs (min 32 chars). Generate: python -c "import secrets; print(secrets.token_hex(32))"')
+@description('Secret for signing local JWTs. Generate: python -c "import secrets; print(secrets.token_hex(32))"')
 param localJwtSecret string = ''
 
 @description('Comma-separated emails with local super-admin rights')
 param localSuperAdminEmails string = ''
 
-// ── Storage Account ─────────────────────────────────────────
-resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' = {
+// ── Reference EXISTING Storage Account ──────────────────────
+// Already deployed as secopskqldashstor — do not recreate
+resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' existing = {
   name: '${baseName}stor'
-  location: location
-  kind: 'StorageV2'
-  sku: {
-    name: 'Standard_LRS'
-  }
-  properties: {
-    supportsHttpsTrafficOnly: true
-    minimumTlsVersion: 'TLS1_2'
-    allowBlobPublicAccess: false
-  }
 }
 
-resource tableService 'Microsoft.Storage/storageAccounts/tableServices@2023-05-01' = {
-  parent: storageAccount
-  name: 'default'
+// ── Reference EXISTING Static Web App ───────────────────────
+// Already deployed as secops-kqldash-swa — do not recreate
+resource staticWebApp 'Microsoft.Web/staticSites@2023-12-01' existing = {
+  name: 'secops-kqldash-swa'
 }
 
-resource dashboardsTable 'Microsoft.Storage/storageAccounts/tableServices/tables@2023-05-01' = {
-  parent: tableService
-  name: 'Dashboards'
-}
-
-resource permissionsTable 'Microsoft.Storage/storageAccounts/tableServices/tables@2023-05-01' = {
-  parent: tableService
-  name: 'DashboardPermissions'
-}
-
-resource localUsersTable 'Microsoft.Storage/storageAccounts/tableServices/tables@2023-05-01' = {
-  parent: tableService
-  name: 'LocalUsers'
-}
-
-resource localInvitesTable 'Microsoft.Storage/storageAccounts/tableServices/tables@2023-05-01' = {
-  parent: tableService
-  name: 'LocalInvites'
-}
-
-// ── App Service Plan (Consumption) ──────────────────────────
+// ── App Service Plan (Consumption / Linux) ───────────────────
 resource appServicePlan 'Microsoft.Web/serverfarms@2023-12-01' = {
   name: '${baseName}-plan'
   location: location
@@ -78,11 +50,11 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2023-12-01' = {
     tier: 'Dynamic'
   }
   properties: {
-    reserved: true // Linux
+    reserved: true // required for Linux
   }
 }
 
-// ── Function App ────────────────────────────────────────────
+// ── Function App ─────────────────────────────────────────────
 resource functionApp 'Microsoft.Web/sites@2023-12-01' = {
   name: '${baseName}-func'
   location: location
@@ -96,15 +68,23 @@ resource functionApp 'Microsoft.Web/sites@2023-12-01' = {
     siteConfig: {
       linuxFxVersion: 'PYTHON|3.11'
       appSettings: [
-        { name: 'AzureWebJobsStorage', value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};AccountKey=${storageAccount.listKeys().keys[0].value};EndpointSuffix=core.windows.net' }
+        {
+          name: 'AzureWebJobsStorage'
+          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};AccountKey=${storageAccount.listKeys().keys[0].value};EndpointSuffix=core.windows.net'
+        }
         { name: 'FUNCTIONS_EXTENSION_VERSION', value: '~4' }
         { name: 'FUNCTIONS_WORKER_RUNTIME', value: 'custom' }
+        { name: 'WEBSITE_RUN_FROM_PACKAGE', value: '1' }
         { name: 'TENANT_ID', value: tenantId }
         { name: 'CLIENT_ID', value: clientId }
         { name: 'CLIENT_SECRET', value: clientSecret }
         { name: 'WORKSPACE_ID', value: workspaceId }
-        { name: 'STORAGE_CONNECTION_STRING', value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};AccountKey=${storageAccount.listKeys().keys[0].value};EndpointSuffix=core.windows.net' }
+        {
+          name: 'STORAGE_CONNECTION_STRING'
+          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};AccountKey=${storageAccount.listKeys().keys[0].value};EndpointSuffix=core.windows.net'
+        }
         { name: 'ENVIRONMENT', value: 'production' }
+        { name: 'FRONTEND_ORIGIN', value: 'https://${staticWebApp.properties.defaultHostname}' }
         { name: 'LOCAL_JWT_SECRET', value: localJwtSecret }
         { name: 'LOCAL_SUPER_ADMIN_EMAILS', value: localSuperAdminEmails }
       ]
@@ -112,25 +92,18 @@ resource functionApp 'Microsoft.Web/sites@2023-12-01' = {
   }
 }
 
-// ── Static Web App ──────────────────────────────────────────
-resource staticWebApp 'Microsoft.Web/staticSites@2023-12-01' = {
-  name: '${baseName}-swa'
-  location: location
-  sku: {
-    name: 'Standard'
-    tier: 'Standard'
-  }
+// ── Link SWA → Function App (backend proxy) ──────────────────
+// Routes /api/* from the SWA to the Function App
+resource swaBackend 'Microsoft.Web/staticSites/linkedBackends@2022-09-01' = {
+  parent: staticWebApp
+  name: 'backend'
   properties: {
-    buildProperties: {
-      appLocation: 'frontend'
-      apiLocation: 'api'
-      outputLocation: 'dist'
-    }
+    backendResourceId: functionApp.id
+    region: location
   }
 }
 
-// ── RBAC: Log Analytics Reader on workspace ─────────────────
-// Role definition ID for "Log Analytics Reader"
+// ── RBAC: Function App Managed Identity → Log Analytics Reader
 var logAnalyticsReaderRoleId = '73c42c96-874c-492b-b04d-ab87d138a893'
 
 resource logAnalyticsRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
@@ -143,7 +116,7 @@ resource logAnalyticsRoleAssignment 'Microsoft.Authorization/roleAssignments@202
   }
 }
 
-// ── RBAC: Microsoft Sentinel Reader on resource group ───────
+// ── RBAC: Function App Managed Identity → Sentinel Reader ────
 var sentinelReaderRoleId = '8d289c81-5571-4d40-9915-34b6d0b6e568'
 
 resource sentinelRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
@@ -156,9 +129,21 @@ resource sentinelRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04
   }
 }
 
-// ── Outputs ─────────────────────────────────────────────────
-output staticWebAppName string = staticWebApp.name
-output staticWebAppUrl string = 'https://${staticWebApp.properties.defaultHostname}'
+// ── RBAC: Function App Managed Identity → Storage Table Data Contributor
+var storageTableDataContributorRoleId = '0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3'
+
+resource storageTableRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(functionApp.id, storageTableDataContributorRoleId, storageAccount.id)
+  scope: storageAccount
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', storageTableDataContributorRoleId)
+    principalId: functionApp.identity.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
+// ── Outputs ──────────────────────────────────────────────────
 output functionAppName string = functionApp.name
-output storageAccountName string = storageAccount.name
+output functionAppUrl string = 'https://${functionApp.properties.defaultHostName}'
+output staticWebAppUrl string = 'https://${staticWebApp.properties.defaultHostname}'
 output functionAppPrincipalId string = functionApp.identity.principalId

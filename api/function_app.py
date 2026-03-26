@@ -1,4 +1,5 @@
 import logging
+import azure.functions as func
 import structlog
 
 from fastapi import FastAPI
@@ -22,9 +23,10 @@ structlog.configure(
     cache_logger_on_first_use=True,
 )
 
-app = FastAPI(title="KQL Dashboard API", version="0.1.0")
+# ── FastAPI application ───────────────────────────────────────
+fastapi_app = FastAPI(title="KQL Dashboard API", version="0.1.0")
 
-app.add_middleware(
+fastapi_app.add_middleware(
     CORSMiddleware,
     allow_origins=(
         [settings.FRONTEND_ORIGIN] if settings.ENVIRONMENT == "production" else ["*"]
@@ -34,9 +36,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(health.router, prefix="/api")
-app.include_router(auth.router)  # auth routes already carry /api prefix
-app.include_router(dashboards.router, prefix="/api")
-app.include_router(query.router, prefix="/api")
-app.include_router(permissions.router, prefix="/api")
-app.include_router(users.router, prefix="/api")
+fastapi_app.include_router(health.router, prefix="/api")
+fastapi_app.include_router(auth.router)          # auth routes already carry /api prefix
+fastapi_app.include_router(dashboards.router, prefix="/api")
+fastapi_app.include_router(query.router, prefix="/api")
+fastapi_app.include_router(permissions.router, prefix="/api")
+fastapi_app.include_router(users.router, prefix="/api")
+
+# ── Azure Functions ASGI wrapper (Flex Consumption) ──────────
+# Exposes fastapi_app as an Azure Function HTTP trigger.
+# For local development use: uvicorn function_app:fastapi_app --port 7071
+app = func.AsgiFunctionApp(
+    app=fastapi_app,
+    http_auth_level=func.AuthLevel.ANONYMOUS,
+)

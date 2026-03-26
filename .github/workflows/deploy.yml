@@ -80,7 +80,12 @@ jobs:
         run: |
           cd api
           pip install -r requirements.txt --target .python_packages/lib/site-packages
-          zip -r ../api.zip . --exclude "*.pyc" --exclude "__pycache__/*" --exclude "tests/*" --exclude "requirements-dev.txt"
+          zip -r ../api.zip . \
+            --exclude "*.pyc" \
+            --exclude "__pycache__/*" \
+            --exclude "tests/*" \
+            --exclude "requirements-dev.txt" \
+            --exclude ".env"
 
       - name: Upload API artifact
         uses: actions/upload-artifact@v4
@@ -100,23 +105,6 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Deploy infrastructure (Bicep)
-        uses: azure/arm-deploy@v2
-        with:
-          subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          resourceGroupName: ${{ secrets.AZURE_RESOURCE_GROUP }}
-          template: infra/main.bicep
-          parameters: >
-            baseName=kqldash
-            tenantId=${{ secrets.TENANT_ID }}
-            clientId=${{ secrets.CLIENT_ID }}
-            clientSecret=${{ secrets.CLIENT_SECRET }}
-            workspaceId=${{ secrets.WORKSPACE_ID }}
-            workspaceResourceId=${{ secrets.WORKSPACE_RESOURCE_ID }}
-            localJwtSecret=${{ secrets.LOCAL_JWT_SECRET }}
-            localSuperAdminEmails=${{ secrets.LOCAL_SUPER_ADMIN_EMAILS }}
-          failOnStdErr: false
-
       - name: Download API artifact
         uses: actions/download-artifact@v4
         with:
@@ -125,7 +113,7 @@ jobs:
       - name: Deploy Function App code
         uses: azure/functions-action@v1
         with:
-          app-name: kqldash-func
+          app-name: secopskqldash-func
           package: api.zip
 
       - name: Download frontend artifact
