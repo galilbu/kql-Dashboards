@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import RGL from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
@@ -111,6 +111,9 @@ export function DashboardView() {
     savePanels(updated);
   };
 
+  // Debounce layout saves to prevent flickering from rapid onLayoutChange calls
+  const saveTimer = useRef<ReturnType<typeof setTimeout>>();
+
   const onLayoutChange = (layout: LayoutItem[]) => {
     const updated = panels.map((panel) => {
       const item = layout.find((l) => l.i === panel.id);
@@ -120,7 +123,9 @@ export function DashboardView() {
       return panel;
     });
     setPanels(updated);
-    savePanels(updated);
+    // Debounce the API save — only save after 500ms of no changes
+    clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => savePanels(updated), 500);
   };
 
   if (loading) {
