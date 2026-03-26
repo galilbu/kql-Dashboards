@@ -112,7 +112,7 @@ export function DashboardView() {
   };
 
   // Debounce layout saves to prevent flickering from rapid onLayoutChange calls
-  const saveTimer = useRef<ReturnType<typeof setTimeout>>();
+  const saveTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const onLayoutChange = (layout: LayoutItem[]) => {
     const updated = panels.map((panel) => {
