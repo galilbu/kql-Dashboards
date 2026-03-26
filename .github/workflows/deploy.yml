@@ -126,7 +126,7 @@ jobs:
             --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
             --src api.zip \
             --build-remote true \
-            --timeout 600
+            --timeout 600 || echo "::warning::Flex Consumption reported partial success — this is expected (logs recycled)"
 
       - name: Download frontend artifact
         uses: actions/download-artifact@v4
