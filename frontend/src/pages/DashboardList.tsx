@@ -4,6 +4,12 @@ import { api } from '../api/client';
 import { useAuth } from '../auth';
 import type { Dashboard } from '../types';
 
+interface MyPermission {
+  dashboard_id: string;
+  dashboard_title: string;
+  role: string;
+}
+
 const inputStyle: React.CSSProperties = {
   width: '100%',
   padding: '0.6rem 0.8rem',
@@ -24,6 +30,7 @@ export function DashboardList() {
   const [showCreate, setShowCreate] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newDesc, setNewDesc] = useState('');
+  const [myPerms, setMyPerms] = useState<MyPermission[]>([]);
   const { getAccessToken } = useAuth();
   const navigate = useNavigate();
 
@@ -32,6 +39,9 @@ export function DashboardList() {
       const token = await getAccessToken(['openid']);
       const data = await api.get<{ dashboards: Dashboard[] }>('/dashboards', token);
       setDashboards(data.dashboards);
+      // Fetch user's own permissions
+      const permsData = await api.get<{ permissions: MyPermission[] }>('/users/me/permissions', token);
+      setMyPerms(permsData.permissions);
     } catch (err) {
       console.error('Failed to fetch dashboards:', err);
     } finally {
@@ -232,6 +242,35 @@ export function DashboardList() {
               )}
             </div>
           ))}
+        </div>
+      )}
+
+      {/* My Permissions */}
+      {myPerms.length > 0 && (
+        <div style={{ marginTop: '2.5rem' }}>
+          <h2 style={{ fontSize: '1rem', marginBottom: '0.75rem', color: 'var(--text-secondary)' }}>
+            My Permissions
+          </h2>
+          <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+            {myPerms.map((p) => (
+              <span
+                key={p.dashboard_id}
+                style={{
+                  fontSize: '0.75rem',
+                  padding: '0.25rem 0.6rem',
+                  backgroundColor: 'var(--surface-2)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 'var(--radius-sm)',
+                  color: 'var(--text-secondary)',
+                }}
+              >
+                {p.dashboard_title}:{' '}
+                <span style={{ color: 'var(--green)', fontWeight: 500, textTransform: 'capitalize' }}>
+                  {p.role}
+                </span>
+              </span>
+            ))}
+          </div>
         </div>
       )}
     </div>

@@ -1,8 +1,7 @@
-import type { ReactNode } from 'react';
-import { Link } from 'react-router-dom';
-import { useAuth } from '../auth';
-import { useLocalAuth } from '../auth/useLocalAuth';
-import { InviteButton } from './InviteButton';
+import type { ReactNode } from "react";
+import { Link } from "react-router-dom";
+import { useAuth } from "../auth";
+import { InviteButton } from "./InviteButton";
 
 interface LayoutProps {
   children: ReactNode;
@@ -10,7 +9,13 @@ interface LayoutProps {
 
 function EtoroLogo() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="82" height="26" fill="none" viewBox="0 0 102 32">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="82"
+      height="26"
+      fill="none"
+      viewBox="0 0 102 32"
+    >
       <path
         fillRule="evenodd"
         clipRule="evenodd"
@@ -22,67 +27,99 @@ function EtoroLogo() {
 }
 
 export function Layout({ children }: LayoutProps) {
-  const { user: msalUser, logout: msalLogout, isAuthenticated: isMsalAuth } = useAuth();
-  const { localUser, logoutLocal, isLocalAuthenticated } = useLocalAuth();
-
-  const displayName = isLocalAuthenticated ? localUser?.displayName : msalUser?.name;
-  // Invite button shown only to local super admins (invite system is for pre-SSO bootstrap)
-  const showInvite = isLocalAuthenticated && (localUser?.isSuperAdmin ?? false);
-
-  const handleLogout = () => {
-    if (isMsalAuth) msalLogout();
-    else logoutLocal();
-  };
+  const { user, logout, isSuperAdmin } = useAuth();
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
       <header
         style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '0 1.5rem',
-          height: '56px',
-          backgroundColor: 'var(--surface-1)',
-          borderBottom: '1px solid var(--border)',
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "0 1.5rem",
+          height: "56px",
+          backgroundColor: "var(--surface-1)",
+          borderBottom: "1px solid var(--border)",
         }}
       >
         <Link
           to="/dashboards"
-          style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textDecoration: 'none' }}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "0.75rem",
+            textDecoration: "none",
+          }}
         >
           <EtoroLogo />
-          <div style={{ width: '1px', height: '20px', backgroundColor: 'var(--border)', margin: '0 0.15rem' }} />
-          <span style={{ color: 'var(--text-secondary)', fontSize: '0.82rem', fontWeight: 500, letterSpacing: '0.02em' }}>
+          <div
+            style={{
+              width: "1px",
+              height: "20px",
+              backgroundColor: "var(--border)",
+              margin: "0 0.15rem",
+            }}
+          />
+          <span
+            style={{
+              color: "var(--text-secondary)",
+              fontSize: "0.82rem",
+              fontWeight: 500,
+              letterSpacing: "0.02em",
+            }}
+          >
             KQL Dashboard
           </span>
         </Link>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-          {showInvite && <InviteButton />}
-          {displayName && (
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)' }}>{displayName}</span>
+        <div
+          style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}
+        >
+          {isSuperAdmin && (
+            <Link
+              to="/admin"
+              style={{
+                padding: "0.3rem 0.7rem",
+                fontSize: "0.75rem",
+                color: "var(--text-tertiary)",
+                border: "1px solid var(--border)",
+                borderRadius: "var(--radius-sm)",
+                fontFamily: "var(--font-body)",
+                textDecoration: "none",
+                transition: "all 0.15s ease",
+              }}
+            >
+              Admin
+            </Link>
+          )}
+          {isSuperAdmin && <InviteButton />}
+          {user && (
+            <span
+              style={{ fontSize: "0.8rem", color: "var(--text-tertiary)" }}
+            >
+              {user.name}
+            </span>
           )}
           <button
-            onClick={handleLogout}
+            onClick={() => logout()}
             style={{
-              padding: '0.3rem 0.7rem',
-              fontSize: '0.75rem',
-              cursor: 'pointer',
-              backgroundColor: 'transparent',
-              color: 'var(--text-tertiary)',
-              border: '1px solid var(--border)',
-              borderRadius: 'var(--radius-sm)',
-              fontFamily: 'var(--font-body)',
-              transition: 'all 0.15s ease',
+              padding: "0.3rem 0.7rem",
+              fontSize: "0.75rem",
+              cursor: "pointer",
+              backgroundColor: "transparent",
+              color: "var(--text-tertiary)",
+              border: "1px solid var(--border)",
+              borderRadius: "var(--radius-sm)",
+              fontFamily: "var(--font-body)",
+              transition: "all 0.15s ease",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = 'var(--border-hover)';
-              e.currentTarget.style.color = 'var(--text-secondary)';
+              e.currentTarget.style.borderColor = "var(--border-hover)";
+              e.currentTarget.style.color = "var(--text-secondary)";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = 'var(--border)';
-              e.currentTarget.style.color = 'var(--text-tertiary)';
+              e.currentTarget.style.borderColor = "var(--border)";
+              e.currentTarget.style.color = "var(--text-tertiary)";
             }}
           >
             Sign out
@@ -90,7 +127,13 @@ export function Layout({ children }: LayoutProps) {
         </div>
       </header>
 
-      <main style={{ flex: 1, overflow: 'auto', backgroundColor: 'var(--surface-0)' }}>
+      <main
+        style={{
+          flex: 1,
+          overflow: "auto",
+          backgroundColor: "var(--surface-0)",
+        }}
+      >
         {children}
       </main>
     </div>

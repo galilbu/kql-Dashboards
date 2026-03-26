@@ -1,14 +1,15 @@
-import { MsalProvider } from '@azure/msal-react';
-import { PublicClientApplication } from '@azure/msal-browser';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { msalConfig, AuthGuard } from './auth';
-import { Layout } from './components/Layout';
-import { DashboardList } from './pages/DashboardList';
-import { DashboardView } from './pages/DashboardView';
-import { LoginPage } from './pages/LoginPage';
-import { RegisterPage } from './pages/RegisterPage';
+import { MsalProvider } from "@azure/msal-react";
+import { PublicClientApplication } from "@azure/msal-browser";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { msalConfig, AuthGuard } from "./auth";
+import { Layout } from "./components/Layout";
+import { DashboardList } from "./pages/DashboardList";
+import { DashboardView } from "./pages/DashboardView";
+import { LoginPage } from "./pages/LoginPage";
+import { RegisterPage } from "./pages/RegisterPage";
+import { AdminPage } from "./pages/AdminPage";
 
-const DEV_MODE = import.meta.env.VITE_DEV_MODE === 'true';
+const DEV_MODE = import.meta.env.VITE_DEV_MODE === "true";
 const msalInstance = DEV_MODE ? null : new PublicClientApplication(msalConfig);
 
 function AppRoutes() {
@@ -36,6 +37,16 @@ function AppRoutes() {
             <AuthGuard>
               <Layout>
                 <DashboardView />
+              </Layout>
+            </AuthGuard>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <AuthGuard>
+              <Layout>
+                <AdminPage />
               </Layout>
             </AuthGuard>
           }

@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from config import settings
-from routes import health, dashboards, query, permissions, users, auth
+from routes import health, dashboards, query, permissions, users, auth, admin
 
 structlog.configure(
     processors=[
@@ -42,6 +42,7 @@ fastapi_app.include_router(dashboards.router, prefix="/api")
 fastapi_app.include_router(query.router, prefix="/api")
 fastapi_app.include_router(permissions.router, prefix="/api")
 fastapi_app.include_router(users.router, prefix="/api")
+fastapi_app.include_router(admin.router, prefix="/api")
 
 # ── Azure Functions ASGI wrapper (Flex Consumption) ──────────
 # Exposes fastapi_app as an Azure Function HTTP trigger.
