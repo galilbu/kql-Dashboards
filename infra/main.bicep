@@ -22,6 +22,13 @@ param workspaceId string
 @description('Log Analytics workspace resource ID (for RBAC assignment)')
 param workspaceResourceId string
 
+@secure()
+@description('Secret for signing local JWTs (min 32 chars). Generate: python -c "import secrets; print(secrets.token_hex(32))"')
+param localJwtSecret string = ''
+
+@description('Comma-separated emails with local super-admin rights')
+param localSuperAdminEmails string = ''
+
 // ── Storage Account ─────────────────────────────────────────
 resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' = {
   name: '${baseName}stor'
@@ -50,6 +57,16 @@ resource dashboardsTable 'Microsoft.Storage/storageAccounts/tableServices/tables
 resource permissionsTable 'Microsoft.Storage/storageAccounts/tableServices/tables@2023-05-01' = {
   parent: tableService
   name: 'DashboardPermissions'
+}
+
+resource localUsersTable 'Microsoft.Storage/storageAccounts/tableServices/tables@2023-05-01' = {
+  parent: tableService
+  name: 'LocalUsers'
+}
+
+resource localInvitesTable 'Microsoft.Storage/storageAccounts/tableServices/tables@2023-05-01' = {
+  parent: tableService
+  name: 'LocalInvites'
 }
 
 // ── App Service Plan (Consumption) ──────────────────────────
@@ -88,6 +105,8 @@ resource functionApp 'Microsoft.Web/sites@2023-12-01' = {
         { name: 'WORKSPACE_ID', value: workspaceId }
         { name: 'STORAGE_CONNECTION_STRING', value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};AccountKey=${storageAccount.listKeys().keys[0].value};EndpointSuffix=core.windows.net' }
         { name: 'ENVIRONMENT', value: 'production' }
+        { name: 'LOCAL_JWT_SECRET', value: localJwtSecret }
+        { name: 'LOCAL_SUPER_ADMIN_EMAILS', value: localSuperAdminEmails }
       ]
     }
   }
