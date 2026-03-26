@@ -55,14 +55,19 @@ async def run_query(
     start = time.time()
     try:
         result = await execute_kql(body.kql)
-    except Exception:
+    except Exception as exc:
+        error_detail = f"{type(exc).__name__}: {exc}"
         logger.error(
             "kql_query_execution_failed",
             user_oid=user.oid,
             dashboard_id=body.dashboard_id,
             query_length=len(body.kql),
+            error=error_detail,
         )
-        raise HTTPException(status_code=500, detail="Query execution failed")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Query execution failed: {error_detail}",
+        )
 
     duration_ms = int((time.time() - start) * 1000)
     logger.info(
