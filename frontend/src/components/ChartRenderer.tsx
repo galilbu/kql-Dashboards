@@ -32,24 +32,45 @@ const COLORS = [
   '#6BF5C0', /* mint */
 ];
 
-function inferChartType(columns: Column[]): 'line' | 'bar' | 'pie' | 'table' {
+/** Detect the effective type of a column by inspecting metadata + actual data values. */
+function detectColumnType(col: Column, rows: (string | number | boolean | null)[][], colIndex: number): 'time' | 'number' | 'string' {
+  // 1. Check metadata type (if the backend provided it correctly)
+  const t = col.type?.toLowerCase() ?? '';
+  if (['datetime', 'timespan'].includes(t)) return 'time';
+  if (['int', 'long', 'real', 'decimal', 'double', 'float'].includes(t)) return 'number';
+
+  // 2. Check column name for time hints
+  const name = col.name.toLowerCase();
+  if (name.includes('time') || name.includes('date') || name === 'timestamp') return 'time';
+
+  // 3. Inspect first non-null values to infer type from data
+  for (const row of rows.slice(0, 20)) {
+    const val = row[colIndex];
+    if (val == null) continue;
+    if (typeof val === 'number') return 'number';
+    if (typeof val === 'string') {
+      // Check if it looks like an ISO datetime
+      if (/^\d{4}-\d{2}-\d{2}T/.test(val)) return 'time';
+      // Check if it's a parseable number
+      if (/^-?\d+(\.\d+)?$/.test(val.trim())) return 'number';
+    }
+  }
+  return 'string';
+}
+
+function inferChartType(columns: Column[], rows: (string | number | boolean | null)[][]): 'line' | 'bar' | 'pie' | 'table' {
   if (columns.length < 2) return 'table';
 
-  const hasTimeColumn = columns.some(
-    (c) => c.type === 'datetime' || c.type === 'timespan' || c.name.toLowerCase().includes('time'),
-  );
-  if (hasTimeColumn) return 'line';
+  const types = columns.map((col, i) => detectColumnType(col, rows, i));
+  const hasTime = types.some((t) => t === 'time');
+  const hasNumber = types.some((t) => t === 'number');
+  const hasString = types.some((t) => t === 'string');
 
-  const hasNumericColumn = columns.some(
-    (c) => c.type === 'int' || c.type === 'long' || c.type === 'real' || c.type === 'decimal',
-  );
-  const hasCategoricalColumn = columns.some((c) => c.type === 'string');
-
-  if (hasCategoricalColumn && hasNumericColumn) {
+  if (hasTime && hasNumber) return 'line';
+  if (hasString && hasNumber) {
     if (columns.length === 2) return 'pie';
     return 'bar';
   }
-
   return 'table';
 }
 
@@ -57,7 +78,13 @@ function toChartData(result: QueryResult): Record<string, string | number | bool
   return result.rows.map((row) => {
     const obj: Record<string, string | number | boolean | null> = {};
     result.columns.forEach((col, i) => {
-      obj[col.name] = row[i];
+      const val = row[i];
+      // Coerce string-encoded numbers to actual numbers for Recharts
+      if (typeof val === 'string' && /^-?\d+(\.\d+)?$/.test(val.trim())) {
+        obj[col.name] = parseFloat(val);
+      } else {
+        obj[col.name] = val;
+      }
     });
     return obj;
   });
@@ -78,14 +105,15 @@ export function ChartRenderer({ result, chartType }: ChartRendererProps) {
     return <div style={{ color: 'var(--text-tertiary)', padding: '0.5rem', fontSize: '0.82rem' }}>No results.</div>;
   }
 
-  const resolvedType = chartType === 'auto' ? inferChartType(result.columns) : chartType;
+  const resolvedType = chartType === 'auto' ? inferChartType(result.columns, result.rows) : chartType;
   const data = toChartData(result);
 
   if (resolvedType === 'table') return <ResultsTable result={result} />;
 
+  const colTypes = result.columns.map((col, i) => detectColumnType(col, result.rows, i));
   const categoryCol = result.columns[0].name;
   const valueColumns = result.columns.slice(1).filter(
-    (c) => c.type === 'int' || c.type === 'long' || c.type === 'real' || c.type === 'decimal' || c.type === 'datetime',
+    (_, i) => colTypes[i + 1] === 'number' || colTypes[i + 1] === 'time',
   );
 
   if (valueColumns.length === 0) return <ResultsTable result={result} />;

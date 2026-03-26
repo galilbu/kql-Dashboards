@@ -9,6 +9,7 @@ import { useAuth } from '../auth';
 interface PanelProps {
   panel: PanelConfig;
   dashboardId: string;
+  editMode?: boolean;
   onUpdate: (updates: Partial<PanelConfig>) => void;
   onRemove: () => void;
 }
@@ -25,7 +26,7 @@ const smallBtn: React.CSSProperties = {
   transition: 'all 0.15s ease',
 };
 
-export function Panel({ panel, dashboardId, onUpdate, onRemove }: PanelProps) {
+export function Panel({ panel, dashboardId, editMode, onUpdate, onRemove }: PanelProps) {
   const [result, setResult] = useState<QueryResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -64,16 +65,16 @@ export function Panel({ panel, dashboardId, onUpdate, onRemove }: PanelProps) {
         overflow: 'hidden',
       }}
     >
-      {/* Header */}
+      {/* Header — only draggable in edit mode */}
       <div
-        className="panel-drag-handle"
+        className={editMode ? "panel-drag-handle" : undefined}
         style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '0.4rem 0.7rem',
           backgroundColor: 'var(--surface-3)',
-          cursor: 'grab',
+          cursor: editMode ? 'grab' : 'default',
           borderBottom: '1px solid var(--border)',
           minHeight: '32px',
         }}

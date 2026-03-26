@@ -243,6 +243,7 @@ export function DashboardView() {
             <Panel
               panel={panel}
               dashboardId={id!}
+              editMode={editMode}
               onUpdate={(updates) => updatePanel(panel.id, updates)}
               onRemove={() => removePanel(panel.id)}
             />
