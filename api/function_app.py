@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from config import settings
-from routes import health, dashboards, query, permissions, users
+from routes import health, dashboards, query, permissions, users, auth
 
 structlog.configure(
     processors=[
@@ -35,6 +35,7 @@ app.add_middleware(
 )
 
 app.include_router(health.router, prefix="/api")
+app.include_router(auth.router)  # auth routes already carry /api prefix
 app.include_router(dashboards.router, prefix="/api")
 app.include_router(query.router, prefix="/api")
 app.include_router(permissions.router, prefix="/api")

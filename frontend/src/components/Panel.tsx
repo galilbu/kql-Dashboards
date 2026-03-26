@@ -13,6 +13,18 @@ interface PanelProps {
   onRemove: () => void;
 }
 
+const smallBtn: React.CSSProperties = {
+  backgroundColor: 'transparent',
+  color: 'var(--text-tertiary)',
+  border: '1px solid var(--border)',
+  borderRadius: 'var(--radius-sm)',
+  fontSize: '0.7rem',
+  cursor: 'pointer',
+  padding: '0.15rem 0.4rem',
+  fontFamily: 'var(--font-body)',
+  transition: 'all 0.15s ease',
+};
+
 export function Panel({ panel, dashboardId, onUpdate, onRemove }: PanelProps) {
   const [result, setResult] = useState<QueryResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -46,24 +58,24 @@ export function Panel({ panel, dashboardId, onUpdate, onRemove }: PanelProps) {
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        backgroundColor: '#1a1a2e',
-        borderRadius: '8px',
-        border: '1px solid #333',
+        backgroundColor: 'var(--surface-2)',
+        borderRadius: 'var(--radius-md)',
+        border: '1px solid var(--border)',
         overflow: 'hidden',
       }}
     >
-      {/* Panel header */}
+      {/* Header */}
       <div
         className="panel-drag-handle"
         style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '0.5rem 0.75rem',
-          backgroundColor: '#16213e',
+          padding: '0.4rem 0.7rem',
+          backgroundColor: 'var(--surface-3)',
           cursor: 'grab',
-          borderBottom: '1px solid #333',
-          minHeight: '36px',
+          borderBottom: '1px solid var(--border)',
+          minHeight: '32px',
         }}
       >
         <input
@@ -72,24 +84,27 @@ export function Panel({ panel, dashboardId, onUpdate, onRemove }: PanelProps) {
           style={{
             backgroundColor: 'transparent',
             border: 'none',
-            color: '#fff',
-            fontSize: '0.85rem',
+            color: 'var(--text-primary)',
+            fontSize: '0.8rem',
             fontWeight: 600,
+            fontFamily: 'var(--font-body)',
             flex: 1,
             outline: 'none',
           }}
         />
-        <div style={{ display: 'flex', gap: '0.25rem' }}>
+        <div style={{ display: 'flex', gap: '0.2rem' }}>
           <select
             value={panel.chartType}
             onChange={(e) => onUpdate({ chartType: e.target.value as PanelConfig['chartType'] })}
             style={{
-              backgroundColor: '#0f0f1a',
-              color: '#ccc',
-              border: '1px solid #444',
-              borderRadius: '3px',
-              fontSize: '0.75rem',
-              padding: '0.15rem 0.3rem',
+              backgroundColor: 'var(--surface-1)',
+              color: 'var(--text-secondary)',
+              border: '1px solid var(--border)',
+              borderRadius: 'var(--radius-sm)',
+              fontSize: '0.7rem',
+              padding: '0.12rem 0.25rem',
+              fontFamily: 'var(--font-body)',
+              cursor: 'pointer',
             }}
           >
             <option value="auto">Auto</option>
@@ -100,28 +115,28 @@ export function Panel({ panel, dashboardId, onUpdate, onRemove }: PanelProps) {
           </select>
           <button
             onClick={() => setEditing(!editing)}
-            style={{
-              backgroundColor: 'transparent',
-              color: '#ccc',
-              border: '1px solid #444',
-              borderRadius: '3px',
-              fontSize: '0.75rem',
-              cursor: 'pointer',
-              padding: '0.15rem 0.4rem',
+            style={smallBtn}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = 'var(--green-border)';
+              e.currentTarget.style.color = 'var(--green)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = 'var(--border)';
+              e.currentTarget.style.color = 'var(--text-tertiary)';
             }}
           >
             {editing ? 'Hide' : 'Edit'}
           </button>
           <button
             onClick={onRemove}
-            style={{
-              backgroundColor: 'transparent',
-              color: '#e74c3c',
-              border: '1px solid #444',
-              borderRadius: '3px',
-              fontSize: '0.75rem',
-              cursor: 'pointer',
-              padding: '0.15rem 0.4rem',
+            style={{ ...smallBtn, color: 'var(--error)' }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = 'rgba(240, 72, 72, 0.3)';
+              e.currentTarget.style.backgroundColor = 'rgba(240, 72, 72, 0.06)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = 'var(--border)';
+              e.currentTarget.style.backgroundColor = 'transparent';
             }}
           >
             X
@@ -129,26 +144,29 @@ export function Panel({ panel, dashboardId, onUpdate, onRemove }: PanelProps) {
         </div>
       </div>
 
-      {/* Editor section */}
+      {/* Editor */}
       {editing && (
-        <div style={{ borderBottom: '1px solid #333' }}>
+        <div style={{ borderBottom: '1px solid var(--border)' }}>
           <KqlEditor
             value={panel.kql}
             onChange={(kql) => onUpdate({ kql })}
             height="120px"
           />
-          <div style={{ padding: '0.4rem 0.75rem', display: 'flex', gap: '0.5rem' }}>
+          <div style={{ padding: '0.35rem 0.7rem', display: 'flex', gap: '0.4rem' }}>
             <button
               onClick={runQuery}
               disabled={loading}
               style={{
-                padding: '0.3rem 0.8rem',
-                backgroundColor: '#27ae60',
-                color: '#fff',
+                padding: '0.3rem 0.75rem',
+                backgroundColor: loading ? 'var(--surface-4)' : 'var(--green)',
+                color: loading ? 'var(--text-tertiary)' : 'var(--text-inverse)',
                 border: 'none',
-                borderRadius: '4px',
+                borderRadius: 'var(--radius-sm)',
                 cursor: loading ? 'not-allowed' : 'pointer',
-                fontSize: '0.8rem',
+                fontSize: '0.78rem',
+                fontFamily: 'var(--font-body)',
+                fontWeight: 600,
+                transition: 'background-color 0.15s ease',
               }}
             >
               {loading ? 'Running...' : 'Run Query'}
@@ -157,12 +175,26 @@ export function Panel({ panel, dashboardId, onUpdate, onRemove }: PanelProps) {
         </div>
       )}
 
-      {/* Results section */}
-      <div style={{ flex: 1, overflow: 'auto', padding: '0.5rem' }}>
+      {/* Results */}
+      <div style={{ flex: 1, overflow: 'auto', padding: '0.4rem' }}>
         {error && (
-          <div style={{ color: '#e74c3c', padding: '0.5rem', fontSize: '0.85rem' }}>{error}</div>
+          <div
+            style={{
+              color: 'var(--error)',
+              padding: '0.4rem 0.5rem',
+              fontSize: '0.8rem',
+              backgroundColor: 'rgba(240, 72, 72, 0.06)',
+              borderRadius: 'var(--radius-sm)',
+            }}
+          >
+            {error}
+          </div>
         )}
-        {loading && <div style={{ color: '#888', padding: '0.5rem' }}>Executing query...</div>}
+        {loading && (
+          <div style={{ color: 'var(--text-tertiary)', padding: '0.5rem', fontSize: '0.8rem' }}>
+            Executing query...
+          </div>
+        )}
         {result && !loading && (
           <>
             {panel.chartType === 'table' ? (
@@ -173,7 +205,14 @@ export function Panel({ panel, dashboardId, onUpdate, onRemove }: PanelProps) {
           </>
         )}
         {!result && !loading && !error && !editing && (
-          <div style={{ color: '#555', padding: '0.5rem', fontSize: '0.85rem' }}>
+          <div
+            style={{
+              color: 'var(--text-tertiary)',
+              padding: '1.5rem',
+              fontSize: '0.8rem',
+              textAlign: 'center',
+            }}
+          >
             Click "Edit" to write a KQL query.
           </div>
         )}

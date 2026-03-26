@@ -28,7 +28,7 @@ async def list_dashboards(
     user: AuthenticatedUser = Depends(get_current_user),
 ):
     """List all dashboards the current user has access to. Super admins see all."""
-    if is_super_admin(user.oid):
+    if is_super_admin(user):
         dashboards = await list_all_dashboards()
     else:
         dashboard_ids = await list_user_dashboard_ids(user.oid)

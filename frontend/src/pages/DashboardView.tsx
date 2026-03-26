@@ -28,6 +28,19 @@ const GridLayout = RGL as unknown as React.ComponentType<{
   children: React.ReactNode;
 }>;
 
+const btnGhost: React.CSSProperties = {
+  padding: '0.4rem 0.85rem',
+  backgroundColor: 'transparent',
+  color: 'var(--text-secondary)',
+  border: '1px solid var(--border)',
+  borderRadius: 'var(--radius-sm)',
+  cursor: 'pointer',
+  fontSize: '0.78rem',
+  fontFamily: 'var(--font-body)',
+  fontWeight: 500,
+  transition: 'all 0.15s ease',
+};
+
 export function DashboardView() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -111,68 +124,84 @@ export function DashboardView() {
   };
 
   if (loading) {
-    return <div style={{ padding: '2rem', color: '#ccc' }}>Loading dashboard...</div>;
+    return (
+      <div style={{ padding: '4rem 2rem', textAlign: 'center' }}>
+        <div
+          style={{
+            display: 'inline-block',
+            width: '6px',
+            height: '6px',
+            backgroundColor: 'var(--green)',
+            borderRadius: '50%',
+            animation: 'pulse 1.2s ease-in-out infinite',
+          }}
+        />
+      </div>
+    );
   }
 
   if (!dashboard) {
-    return <div style={{ padding: '2rem', color: '#ccc' }}>Dashboard not found.</div>;
+    return (
+      <div style={{ padding: '4rem 2rem', textAlign: 'center', color: 'var(--text-tertiary)' }}>
+        Dashboard not found.
+      </div>
+    );
   }
 
   return (
-    <div style={{ padding: '1.5rem' }}>
+    <div style={{ padding: '1.5rem 1.75rem', animation: 'fadeIn 0.3s ease both' }}>
+      {/* Toolbar */}
       <div
         style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          marginBottom: '1rem',
+          marginBottom: '1.25rem',
         }}
       >
         <div>
-          <h1 style={{ color: '#fff', margin: '0 0 0.25rem' }}>{dashboard.title}</h1>
+          <h1 style={{ fontSize: '1.4rem' }}>{dashboard.title}</h1>
           {dashboard.description && (
-            <p style={{ color: '#888', margin: 0, fontSize: '0.85rem' }}>{dashboard.description}</p>
+            <p style={{ color: 'var(--text-tertiary)', fontSize: '0.8rem', marginTop: '0.15rem' }}>
+              {dashboard.description}
+            </p>
           )}
         </div>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', gap: '0.4rem' }}>
+          <button
+            onClick={() => navigate('/dashboards')}
+            style={btnGhost}
+            onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--border-hover)')}
+            onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--border)')}
+          >
+            Back
+          </button>
           <button
             onClick={() => setShowShare(true)}
-            style={{
-              padding: '0.5rem 1rem',
-              backgroundColor: 'transparent',
-              color: '#ccc',
-              border: '1px solid #555',
-              borderRadius: '4px',
-              cursor: 'pointer',
-            }}
+            style={btnGhost}
+            onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--border-hover)')}
+            onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--border)')}
           >
             Share
           </button>
           <button
             onClick={addPanel}
             style={{
-              padding: '0.5rem 1rem',
-              backgroundColor: '#0078d4',
-              color: '#fff',
+              padding: '0.4rem 0.85rem',
+              backgroundColor: 'var(--green)',
+              color: 'var(--text-inverse)',
               border: 'none',
-              borderRadius: '4px',
+              borderRadius: 'var(--radius-sm)',
               cursor: 'pointer',
+              fontSize: '0.78rem',
+              fontFamily: 'var(--font-body)',
+              fontWeight: 600,
+              transition: 'background-color 0.15s ease',
             }}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--green-light)')}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--green)')}
           >
             + Add Panel
-          </button>
-          <button
-            onClick={() => navigate('/dashboards')}
-            style={{
-              padding: '0.5rem 1rem',
-              backgroundColor: 'transparent',
-              color: '#ccc',
-              border: '1px solid #555',
-              borderRadius: '4px',
-              cursor: 'pointer',
-            }}
-          >
-            Back
           </button>
         </div>
       </div>
@@ -184,7 +213,7 @@ export function DashboardView() {
         layout={panels.map((p) => ({ i: p.id, x: p.x, y: p.y, w: p.w, h: p.h }))}
         cols={12}
         rowHeight={80}
-        width={window.innerWidth - 48}
+        width={window.innerWidth - 56}
         onLayoutChange={onLayoutChange}
         draggableHandle=".panel-drag-handle"
       >

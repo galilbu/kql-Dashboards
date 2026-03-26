@@ -34,11 +34,21 @@ export function ExportCsv({ result, filename = 'query-results' }: ExportCsvProps
       style={{
         padding: '0.2rem 0.5rem',
         backgroundColor: 'transparent',
-        color: '#888',
-        border: '1px solid #444',
-        borderRadius: '3px',
-        fontSize: '0.7rem',
+        color: 'var(--text-tertiary)',
+        border: '1px solid var(--border)',
+        borderRadius: 'var(--radius-sm)',
+        fontSize: '0.68rem',
+        fontFamily: 'var(--font-body)',
         cursor: 'pointer',
+        transition: 'all 0.15s ease',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.borderColor = 'var(--green-border)';
+        e.currentTarget.style.color = 'var(--green)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.borderColor = 'var(--border)';
+        e.currentTarget.style.color = 'var(--text-tertiary)';
       }}
     >
       Export CSV

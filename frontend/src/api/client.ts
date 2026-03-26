@@ -2,6 +2,12 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
 const DEV_MODE = import.meta.env.VITE_DEV_MODE === 'true';
 const DEV_USER_OID = import.meta.env.VITE_DEV_USER_OID || 'dev-user-00000000-0000-0000-0000-000000000001';
 
+const LOCAL_TOKEN_KEY = 'local_auth_token';
+
+function getLocalToken(): string | null {
+  return localStorage.getItem(LOCAL_TOKEN_KEY);
+}
+
 type RequestOptions = {
   method?: string;
   body?: unknown;
@@ -18,7 +24,14 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   if (DEV_MODE) {
     headers['X-Dev-User-OID'] = DEV_USER_OID;
   } else if (token) {
+    // Entra SSO token passed explicitly
     headers['Authorization'] = `Bearer ${token}`;
+  } else {
+    // Fall back to local JWT if present
+    const localToken = getLocalToken();
+    if (localToken) {
+      headers['Authorization'] = `Bearer ${localToken}`;
+    }
   }
 
   const response = await fetch(`${API_BASE}${path}`, {

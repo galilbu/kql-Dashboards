@@ -41,7 +41,7 @@ async def _get_jwks() -> dict:
         return _jwks_cache
 
 
-async def _validate_token(token: str) -> dict:
+async def _validate_entra_token(token: str) -> dict:
     """Validate JWT token against Entra ID JWKS."""
     jwks = await _get_jwks()
 
@@ -50,7 +50,6 @@ async def _validate_token(token: str) -> dict:
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token header")
 
-    # Find the signing key
     rsa_key = {}
     for key in jwks.get("keys", []):
         if key["kid"] == unverified_header.get("kid"):
@@ -73,17 +72,32 @@ async def _validate_token(token: str) -> dict:
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
-    # Validate tenant
     if claims.get("tid") != settings.TENANT_ID:
         raise HTTPException(status_code=401, detail="Token from wrong tenant")
 
     return claims
 
 
-async def get_current_user(request: Request) -> AuthenticatedUser:
-    """FastAPI dependency — extract and validate the authenticated user."""
+def _validate_local_token(token: str) -> dict:
+    """Validate a locally-issued HS256 JWT."""
+    if not settings.LOCAL_JWT_SECRET:
+        raise HTTPException(status_code=401, detail="Local auth is not configured")
+    from services.local_auth_service import LOCAL_ISSUER, decode_local_jwt
+    try:
+        return decode_local_jwt(token)
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid or expired local token")
 
-    # DEV ONLY — dev token bypass
+
+async def get_current_user(request: Request) -> AuthenticatedUser:
+    """FastAPI dependency — extract and validate the authenticated user.
+
+    Supports two token types:
+    - Entra ID JWTs (RS256, validated against JWKS)
+    - Local JWTs    (HS256, validated with LOCAL_JWT_SECRET)
+    """
+
+    # DEV ONLY — bypass
     if settings.ENVIRONMENT == "development":
         dev_oid = request.headers.get("X-Dev-User-OID")
         if dev_oid:
@@ -94,7 +108,6 @@ async def get_current_user(request: Request) -> AuthenticatedUser:
                 preferred_username="dev@localhost",
             )
 
-    # Extract Bearer token
     auth_header = request.headers.get("Authorization")
     if not auth_header or not auth_header.startswith("Bearer "):
         raise HTTPException(
@@ -103,8 +116,25 @@ async def get_current_user(request: Request) -> AuthenticatedUser:
 
     token = auth_header.removeprefix("Bearer ")
 
-    claims = await _validate_token(token)
+    # Peek at issuer without verifying signature to route to the right validator
+    try:
+        unverified = jwt.get_unverified_claims(token)
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
 
+    from services.local_auth_service import LOCAL_ISSUER
+
+    if unverified.get("iss") == LOCAL_ISSUER:
+        claims = _validate_local_token(token)
+        return AuthenticatedUser(
+            oid=claims["sub"],
+            tid="local",
+            name=claims.get("name", ""),
+            preferred_username=claims.get("email", ""),
+        )
+
+    # Fall through to Entra validation
+    claims = await _validate_entra_token(token)
     return AuthenticatedUser(
         oid=claims["oid"],
         tid=claims["tid"],

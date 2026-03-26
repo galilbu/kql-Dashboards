@@ -5,6 +5,8 @@ import { msalConfig, AuthGuard } from './auth';
 import { Layout } from './components/Layout';
 import { DashboardList } from './pages/DashboardList';
 import { DashboardView } from './pages/DashboardView';
+import { LoginPage } from './pages/LoginPage';
+import { RegisterPage } from './pages/RegisterPage';
 
 const DEV_MODE = import.meta.env.VITE_DEV_MODE === 'true';
 const msalInstance = DEV_MODE ? null : new PublicClientApplication(msalConfig);
@@ -12,15 +14,34 @@ const msalInstance = DEV_MODE ? null : new PublicClientApplication(msalConfig);
 function AppRoutes() {
   return (
     <BrowserRouter>
-      <AuthGuard>
-        <Layout>
-          <Routes>
-            <Route path="/dashboards" element={<DashboardList />} />
-            <Route path="/dashboards/:id" element={<DashboardView />} />
-            <Route path="*" element={<Navigate to="/dashboards" replace />} />
-          </Routes>
-        </Layout>
-      </AuthGuard>
+      <Routes>
+        {/* Public routes */}
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+
+        {/* Protected routes */}
+        <Route
+          path="/dashboards"
+          element={
+            <AuthGuard>
+              <Layout>
+                <DashboardList />
+              </Layout>
+            </AuthGuard>
+          }
+        />
+        <Route
+          path="/dashboards/:id"
+          element={
+            <AuthGuard>
+              <Layout>
+                <DashboardView />
+              </Layout>
+            </AuthGuard>
+          }
+        />
+        <Route path="*" element={<Navigate to="/dashboards" replace />} />
+      </Routes>
     </BrowserRouter>
   );
 }

@@ -6,7 +6,7 @@ interface ResultsTableProps {
 
 export function ResultsTable({ result }: ResultsTableProps) {
   if (!result.columns.length) {
-    return <div style={{ color: '#888', padding: '0.5rem' }}>No results.</div>;
+    return <div style={{ color: 'var(--text-tertiary)', padding: '0.5rem' }}>No results.</div>;
   }
 
   return (
@@ -15,8 +15,9 @@ export function ResultsTable({ result }: ResultsTableProps) {
         style={{
           width: '100%',
           borderCollapse: 'collapse',
-          fontSize: '0.8rem',
-          color: '#ccc',
+          fontSize: '0.78rem',
+          color: 'var(--text-secondary)',
+          fontFamily: 'var(--font-body)',
         }}
       >
         <thead>
@@ -27,10 +28,12 @@ export function ResultsTable({ result }: ResultsTableProps) {
                 style={{
                   textAlign: 'left',
                   padding: '0.4rem 0.6rem',
-                  borderBottom: '1px solid #444',
-                  backgroundColor: '#16213e',
-                  color: '#fff',
+                  borderBottom: '1px solid var(--green-border)',
+                  backgroundColor: 'var(--surface-3)',
+                  color: 'var(--text-primary)',
                   fontWeight: 600,
+                  fontSize: '0.72rem',
+                  letterSpacing: '0.03em',
                   whiteSpace: 'nowrap',
                   position: 'sticky',
                   top: 0,
@@ -43,13 +46,18 @@ export function ResultsTable({ result }: ResultsTableProps) {
         </thead>
         <tbody>
           {result.rows.map((row, rowIdx) => (
-            <tr key={rowIdx} style={{ backgroundColor: rowIdx % 2 === 0 ? 'transparent' : '#1a1a2e' }}>
+            <tr
+              key={rowIdx}
+              style={{
+                backgroundColor: rowIdx % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.015)',
+              }}
+            >
               {row.map((cell, cellIdx) => (
                 <td
                   key={cellIdx}
                   style={{
-                    padding: '0.35rem 0.6rem',
-                    borderBottom: '1px solid #2a2a3e',
+                    padding: '0.3rem 0.6rem',
+                    borderBottom: '1px solid var(--border)',
                     whiteSpace: 'nowrap',
                     maxWidth: '300px',
                     overflow: 'hidden',
@@ -64,7 +72,14 @@ export function ResultsTable({ result }: ResultsTableProps) {
         </tbody>
       </table>
       {result.partial && (
-        <div style={{ color: '#f39c12', padding: '0.5rem', fontSize: '0.8rem' }}>
+        <div
+          style={{
+            color: 'var(--warning)',
+            padding: '0.4rem 0.6rem',
+            fontSize: '0.78rem',
+            marginTop: '0.4rem',
+          }}
+        >
           Results are partial — the query timed out before completing.
         </div>
       )}
