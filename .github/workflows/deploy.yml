@@ -105,6 +105,14 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      - name: Remove unsupported app settings for Flex Consumption
+        run: |
+          az functionapp config appsettings delete \
+            --name secopskqldash-func \
+            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+            --setting-names WEBSITE_RUN_FROM_PACKAGE \
+            --output none 2>/dev/null || true
+
       - name: Download API artifact
         uses: actions/download-artifact@v4
         with:
