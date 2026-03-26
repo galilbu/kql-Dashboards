@@ -105,24 +105,18 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Ensure WEBSITE_RUN_FROM_PACKAGE uses Kudu (not blob URL)
-        run: |
-          az functionapp config appsettings set \
-            --name secopskqldash-func \
-            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
-            --settings WEBSITE_RUN_FROM_PACKAGE=1 \
-            --output none
-
       - name: Download API artifact
         uses: actions/download-artifact@v4
         with:
           name: api-zip
 
-      - name: Deploy Function App code
-        uses: azure/functions-action@v1
-        with:
-          app-name: secopskqldash-func
-          package: api.zip
+      - name: Deploy Function App code (Flex Consumption)
+        run: |
+          az functionapp deploy \
+            --name secopskqldash-func \
+            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+            --src-path api.zip \
+            --type zip
 
       - name: Download frontend artifact
         uses: actions/download-artifact@v4
