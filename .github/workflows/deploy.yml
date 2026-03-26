@@ -112,11 +112,10 @@ jobs:
 
       - name: Deploy Function App code (Flex Consumption)
         run: |
-          az functionapp deploy \
+          az functionapp deployment source config-zip \
             --name secopskqldash-func \
             --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
-            --src-path api.zip \
-            --type zip
+            --src api.zip
 
       - name: Download frontend artifact
         uses: actions/download-artifact@v4
