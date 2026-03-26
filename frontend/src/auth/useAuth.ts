@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { useMsal, useIsAuthenticated, useAccount } from "@azure/msal-react";
 import { InteractionRequiredAuthError } from "@azure/msal-browser";
 import { loginRequest } from "./msalConfig";
@@ -40,24 +40,36 @@ export const useAuth = DEV_MODE
       } = useLocalAuth();
 
       // ── Local auth takes priority over MSAL ──
-      // This ensures getAccessToken returns the local JWT
-      // so all API calls work for locally-authenticated users.
+      // Memoize everything to prevent infinite re-render loops in useEffect deps.
+      const localGetToken = useCallback(
+        async () => getLocalToken(),
+        [getLocalToken],
+      );
+      const localLogout = useCallback(() => {
+        logoutLocal();
+        window.location.href = "/login";
+      }, [logoutLocal]);
+      const localUser_ = useMemo(
+        () =>
+          localUser
+            ? {
+                name: localUser.displayName,
+                username: localUser.email,
+                oid: localUser.id,
+              }
+            : null,
+        [localUser],
+      );
+
       if (isLocalAuthenticated && localUser) {
         return {
           isAuthenticated: true,
           account: null,
-          user: {
-            name: localUser.displayName,
-            username: localUser.email,
-            oid: localUser.id,
-          },
+          user: localUser_,
           isSuperAdmin: localUser.isSuperAdmin,
           login: async () => {},
-          logout: () => {
-            logoutLocal();
-            window.location.href = "/login";
-          },
-          getAccessToken: async () => getLocalToken(),
+          logout: localLogout,
+          getAccessToken: localGetToken,
         };
       }
 

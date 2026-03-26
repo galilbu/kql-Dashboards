@@ -39,7 +39,7 @@ export function Panel({ panel, dashboardId, onUpdate, onRemove }: PanelProps) {
     try {
       const token = await getAccessToken(['openid']);
       const data = await api.post<QueryResult>(
-        '/query',
+        `/query?dashboard_id=${dashboardId}`,
         { kql: panel.kql, dashboard_id: dashboardId },
         token,
       );
