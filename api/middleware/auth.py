@@ -82,7 +82,7 @@ def _validate_local_token(token: str) -> dict:
     """Validate a locally-issued HS256 JWT."""
     if not settings.LOCAL_JWT_SECRET:
         raise HTTPException(status_code=401, detail="Local auth is not configured")
-    from services.local_auth_service import LOCAL_ISSUER, decode_local_jwt
+    from services.local_auth_service import decode_local_jwt
     try:
         return decode_local_jwt(token)
     except JWTError:

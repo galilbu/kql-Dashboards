@@ -12,7 +12,7 @@ from datetime import datetime, timedelta, timezone
 import hashlib
 import os
 
-from jose import JWTError, jwt
+from jose import jwt
 from pydantic import BaseModel
 
 from config import settings
