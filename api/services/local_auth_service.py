@@ -98,9 +98,7 @@ def decode_local_jwt(token: str) -> dict:
 async def get_user_by_email(email: str) -> LocalUser | None:
     client = get_table_client(_USERS_TABLE)
     try:
-        entities = list(
-            client.query_entities(f"email eq '{email.lower()}'")
-        )
+        entities = list(client.query_entities(f"email eq '{email.lower()}'"))
         if not entities:
             return None
         e = entities[0]
@@ -132,15 +130,19 @@ async def create_user(email: str, display_name: str, password: str) -> LocalUser
     user_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc).isoformat()
     client = get_table_client(_USERS_TABLE)
-    client.create_entity({
-        "PartitionKey": "user",
-        "RowKey": user_id,
-        "email": email.lower(),
-        "display_name": display_name,
-        "password_hash": hash_password(password),
-        "created_at": now,
-    })
-    return LocalUser(id=user_id, email=email.lower(), display_name=display_name, created_at=now)
+    client.create_entity(
+        {
+            "PartitionKey": "user",
+            "RowKey": user_id,
+            "email": email.lower(),
+            "display_name": display_name,
+            "password_hash": hash_password(password),
+            "created_at": now,
+        }
+    )
+    return LocalUser(
+        id=user_id, email=email.lower(), display_name=display_name, created_at=now
+    )
 
 
 async def verify_user_password(email: str, password: str) -> LocalUser | None:
@@ -180,14 +182,16 @@ async def create_invite(created_by: str) -> LocalInvite:
     now = datetime.now(timezone.utc)
     expires_at = now + timedelta(days=_INVITE_TTL_DAYS)
     client = get_table_client(_INVITES_TABLE)
-    client.create_entity({
-        "PartitionKey": "invite",
-        "RowKey": token,
-        "created_by": created_by,
-        "created_at": now.isoformat(),
-        "expires_at": expires_at.isoformat(),
-        "used": False,
-    })
+    client.create_entity(
+        {
+            "PartitionKey": "invite",
+            "RowKey": token,
+            "created_by": created_by,
+            "created_at": now.isoformat(),
+            "expires_at": expires_at.isoformat(),
+            "used": False,
+        }
+    )
     return LocalInvite(
         token=token,
         created_by=created_by,

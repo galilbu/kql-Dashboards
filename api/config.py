@@ -31,7 +31,11 @@ class Settings(BaseSettings):
     def local_super_admin_list(self) -> list[str]:
         if not self.LOCAL_SUPER_ADMIN_EMAILS:
             return []
-        return [e.strip().lower() for e in self.LOCAL_SUPER_ADMIN_EMAILS.split(",") if e.strip()]
+        return [
+            e.strip().lower()
+            for e in self.LOCAL_SUPER_ADMIN_EMAILS.split(",")
+            if e.strip()
+        ]
 
 
 settings = Settings()

@@ -79,7 +79,9 @@ async def create_invite_link(
 ):
     """Generate a single-use invite link. Super admins only."""
     if not is_super_admin(current_user):
-        raise HTTPException(status_code=403, detail="Only super admins can create invite links")
+        raise HTTPException(
+            status_code=403, detail="Only super admins can create invite links"
+        )
 
     if not settings.LOCAL_JWT_SECRET:
         raise HTTPException(
@@ -113,7 +115,9 @@ async def register(body: RegisterRequest):
         if not invite:
             raise HTTPException(status_code=400, detail="Invalid invite token")
         if invite.used:
-            raise HTTPException(status_code=400, detail="Invite token has already been used")
+            raise HTTPException(
+                status_code=400, detail="Invite token has already been used"
+            )
         expires_at = datetime.fromisoformat(invite.expires_at)
         if datetime.now(timezone.utc) > expires_at:
             raise HTTPException(status_code=400, detail="Invite token has expired")
@@ -121,7 +125,9 @@ async def register(body: RegisterRequest):
     # Check email uniqueness
     existing = await get_user_by_email(body.email)
     if existing:
-        raise HTTPException(status_code=409, detail="An account with this email already exists")
+        raise HTTPException(
+            status_code=409, detail="An account with this email already exists"
+        )
 
     user = await create_user(
         email=str(body.email),

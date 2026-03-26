@@ -37,7 +37,7 @@ fastapi_app.add_middleware(
 )
 
 fastapi_app.include_router(health.router, prefix="/api")
-fastapi_app.include_router(auth.router)          # auth routes already carry /api prefix
+fastapi_app.include_router(auth.router)  # auth routes already carry /api prefix
 fastapi_app.include_router(dashboards.router, prefix="/api")
 fastapi_app.include_router(query.router, prefix="/api")
 fastapi_app.include_router(permissions.router, prefix="/api")

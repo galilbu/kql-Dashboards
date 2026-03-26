@@ -14,7 +14,10 @@ def is_super_admin(user: AuthenticatedUser) -> bool:
     """
     if user.oid in settings.super_admin_list:
         return True
-    if user.tid == "local" and user.preferred_username.lower() in settings.local_super_admin_list:
+    if (
+        user.tid == "local"
+        and user.preferred_username.lower() in settings.local_super_admin_list
+    ):
         return True
     return False
 
