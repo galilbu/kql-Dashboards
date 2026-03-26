@@ -79,11 +79,12 @@ jobs:
       - name: Package API for deployment
         run: |
           cd api
-          pip install -r requirements.txt --target .python_packages/lib/site-packages
           zip -r ../api.zip . \
             --exclude "*.pyc" \
             --exclude "__pycache__/*" \
+            --exclude ".python_packages/*" \
             --exclude "tests/*" \
+            --exclude ".pytest_cache/*" \
             --exclude "requirements-dev.txt" \
             --exclude ".env"
 
@@ -118,12 +119,14 @@ jobs:
         with:
           name: api-zip
 
-      - name: Deploy Function App code (Flex Consumption)
+      - name: Deploy Function App code (Flex Consumption — remote build)
         run: |
           az functionapp deployment source config-zip \
             --name secopskqldash-func \
             --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
-            --src api.zip
+            --src api.zip \
+            --build-remote true \
+            --timeout 600
 
       - name: Download frontend artifact
         uses: actions/download-artifact@v4
