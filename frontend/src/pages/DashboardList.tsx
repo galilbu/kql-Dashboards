@@ -3,11 +3,19 @@ import { useNavigate } from "react-router-dom";
 import { api } from "../api/client";
 import { useAuth } from "../auth";
 import type { Dashboard } from "../types";
+import { InviteDialog } from "../components/InviteDialog";
 
 interface MyPermission {
   dashboard_id: string;
   dashboard_title: string;
   role: string;
+}
+
+interface LocalUser {
+  id: string;
+  email: string;
+  display_name: string;
+  created_at: string;
 }
 
 const inputStyle: React.CSSProperties = {
@@ -31,8 +39,10 @@ export function DashboardList() {
   const [newTitle, setNewTitle] = useState("");
   const [newDesc, setNewDesc] = useState("");
   const [myPerms, setMyPerms] = useState<MyPermission[]>([]);
-  const [tab, setTab] = useState<"dashboards" | "permissions">("dashboards");
-  const { getAccessToken } = useAuth();
+  const [users, setUsers] = useState<LocalUser[]>([]);
+  const [tab, setTab] = useState<"dashboards" | "permissions" | "users">("dashboards");
+  const [showInvite, setShowInvite] = useState(false);
+  const { getAccessToken, isSuperAdmin } = useAuth();
   const navigate = useNavigate();
 
   const fetchDashboards = useCallback(async () => {
@@ -48,6 +58,13 @@ export function DashboardList() {
         token,
       );
       setMyPerms(permsData.permissions);
+      // Super admins also fetch user list
+      try {
+        const usersData = await api.get<{ users: LocalUser[] }>("/admin/users", token);
+        setUsers(usersData.users);
+      } catch {
+        // Not a super admin — ignore
+      }
     } catch (err) {
       console.error("Failed to fetch dashboards:", err);
     } finally {
@@ -74,6 +91,18 @@ export function DashboardList() {
       navigate(`/dashboards/${created.id}`);
     } catch (err) {
       console.error("Failed to create dashboard:", err);
+    }
+  };
+
+  const handleDeleteUser = async (userId: string, email: string) => {
+    if (!confirm(`Delete user ${email}? This will revoke all their permissions.`))
+      return;
+    try {
+      const token = await getAccessToken(["openid"]);
+      await api.delete("/admin/users/" + userId, token);
+      fetchDashboards();
+    } catch (err) {
+      console.error("Failed to delete user:", err);
     }
   };
 
@@ -116,6 +145,8 @@ export function DashboardList() {
         animation: "fadeIn 0.35s ease both",
       }}
     >
+      {showInvite && <InviteDialog onClose={() => setShowInvite(false)} />}
+
       {/* Header */}
       <div
         style={{
@@ -126,6 +157,32 @@ export function DashboardList() {
         }}
       >
         <h1>Home</h1>
+        <div style={{ display: "flex", gap: "0.4rem" }}>
+        {tab === "users" && isSuperAdmin && (
+          <button
+            onClick={() => setShowInvite(true)}
+            style={{
+              padding: "0.5rem 1.1rem",
+              backgroundColor: "var(--green)",
+              color: "var(--text-inverse)",
+              border: "none",
+              borderRadius: "var(--radius-sm)",
+              cursor: "pointer",
+              fontSize: "0.82rem",
+              fontFamily: "var(--font-body)",
+              fontWeight: 600,
+              transition: "background-color 0.15s ease",
+            }}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.backgroundColor = "var(--green-light)")
+            }
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.backgroundColor = "var(--green)")
+            }
+          >
+            + Invite User
+          </button>
+        )}
         {tab === "dashboards" && (
           <button
             onClick={() => setShowCreate(true)}
@@ -151,6 +208,7 @@ export function DashboardList() {
             + New Dashboard
           </button>
         )}
+        </div>
       </div>
 
       {/* Tabs */}
@@ -174,6 +232,14 @@ export function DashboardList() {
         >
           My Permissions ({myPerms.length})
         </button>
+        {isSuperAdmin && (
+          <button
+            style={tabStyle(tab === "users")}
+            onClick={() => setTab("users")}
+          >
+            Users ({users.length})
+          </button>
+        )}
       </div>
 
       {/* ── Dashboards tab ── */}
@@ -384,6 +450,59 @@ export function DashboardList() {
                 </div>
               ))}
             </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Users tab (super admin only) ── */}
+      {tab === "users" && isSuperAdmin && (
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+          {users.length === 0 ? (
+            <p style={{ color: "var(--text-tertiary)", fontSize: "0.85rem", textAlign: "center", padding: "3rem 0" }}>
+              No local users registered yet.
+            </p>
+          ) : (
+            users.map((u) => (
+              <div
+                key={u.id}
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  padding: "0.85rem 1rem",
+                  backgroundColor: "var(--surface-2)",
+                  borderRadius: "var(--radius-md)",
+                  border: "1px solid var(--border)",
+                }}
+              >
+                <div>
+                  <div style={{ color: "var(--text-primary)", fontSize: "0.88rem", fontWeight: 500 }}>
+                    {u.display_name}
+                  </div>
+                  <div style={{ color: "var(--text-tertiary)", fontSize: "0.75rem", marginTop: "0.1rem" }}>
+                    {u.email}
+                    <span style={{ marginLeft: "0.5rem", color: "var(--text-tertiary)", fontSize: "0.68rem" }}>
+                      {u.created_at ? new Date(u.created_at).toLocaleDateString() : ""}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleDeleteUser(u.id, u.email)}
+                  style={{
+                    backgroundColor: "transparent",
+                    color: "var(--error)",
+                    border: "1px solid var(--border)",
+                    borderRadius: "var(--radius-sm)",
+                    fontSize: "0.72rem",
+                    cursor: "pointer",
+                    padding: "0.2rem 0.5rem",
+                    fontFamily: "var(--font-body)",
+                  }}
+                >
+                  Delete
+                </button>
+              </div>
+            ))
           )}
         </div>
       )}

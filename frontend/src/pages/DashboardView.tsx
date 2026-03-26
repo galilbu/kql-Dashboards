@@ -25,6 +25,8 @@ const GridLayout = RGL as unknown as React.ComponentType<{
   width: number;
   onLayoutChange?: (layout: LayoutItem[]) => void;
   draggableHandle?: string;
+  isDraggable?: boolean;
+  isResizable?: boolean;
   children: React.ReactNode;
 }>;
 
@@ -50,6 +52,7 @@ export function DashboardView() {
   const [panels, setPanels] = useState<PanelConfig[]>([]);
   const [loading, setLoading] = useState(true);
   const [showShare, setShowShare] = useState(false);
+  const [editMode, setEditMode] = useState(false);
 
   const fetchDashboard = useCallback(async () => {
     if (!id) return;
@@ -190,6 +193,17 @@ export function DashboardView() {
             Share
           </button>
           <button
+            onClick={() => setEditMode(!editMode)}
+            style={{
+              ...btnGhost,
+              backgroundColor: editMode ? 'var(--green-bg)' : 'transparent',
+              color: editMode ? 'var(--green)' : 'var(--text-secondary)',
+              borderColor: editMode ? 'var(--green-border)' : 'var(--border)',
+            }}
+          >
+            {editMode ? 'Done' : 'Edit Layout'}
+          </button>
+          {editMode && <button
             onClick={addPanel}
             style={{
               padding: '0.4rem 0.85rem',
@@ -207,7 +221,7 @@ export function DashboardView() {
             onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--green)')}
           >
             + Add Panel
-          </button>
+          </button>}
         </div>
       </div>
 
@@ -219,8 +233,10 @@ export function DashboardView() {
         cols={12}
         rowHeight={80}
         width={window.innerWidth - 56}
-        onLayoutChange={onLayoutChange}
+        onLayoutChange={editMode ? onLayoutChange : undefined}
         draggableHandle=".panel-drag-handle"
+        isDraggable={editMode}
+        isResizable={editMode}
       >
         {panels.map((panel) => (
           <div key={panel.id}>

@@ -1,5 +1,6 @@
 import structlog
-from datetime import timedelta
+from datetime import datetime, date, timedelta
+from decimal import Decimal
 from typing import Any
 
 from azure.identity import DefaultAzureCredential, ClientSecretCredential
@@ -9,6 +10,22 @@ from azure.core.exceptions import HttpResponseError
 from config import settings
 
 logger = structlog.get_logger()
+
+
+def _serialize_value(val: Any) -> str | int | float | bool | None:
+    """Convert Log Analytics result values to JSON-serializable primitives."""
+    if val is None:
+        return None
+    if isinstance(val, (str, int, float, bool)):
+        return val
+    if isinstance(val, (datetime, date)):
+        return val.isoformat()
+    if isinstance(val, timedelta):
+        return str(val)
+    if isinstance(val, Decimal):
+        return float(val)
+    return str(val)
+
 
 _client: LogsQueryClient | None = None
 
@@ -55,7 +72,7 @@ async def execute_kql(kql: str, workspace_id: str | None = None) -> dict[str, An
             return {"columns": [], "rows": []}
 
         columns = [{"name": col.name, "type": col.column_type} for col in table.columns]
-        rows = [list(row) for row in table.rows]
+        rows = [[_serialize_value(cell) for cell in row] for row in table.rows]
 
         return {"columns": columns, "rows": rows}
 
@@ -65,7 +82,7 @@ async def execute_kql(kql: str, workspace_id: str | None = None) -> dict[str, An
             return {"columns": [], "rows": []}
 
         columns = [{"name": col.name, "type": col.column_type} for col in table.columns]
-        rows = [list(row) for row in table.rows]
+        rows = [[_serialize_value(cell) for cell in row] for row in table.rows]
 
         return {"columns": columns, "rows": rows, "partial": True}
 
