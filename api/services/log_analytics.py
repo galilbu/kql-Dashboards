@@ -48,6 +48,23 @@ def _get_client() -> LogsQueryClient:
     return _client
 
 
+def _parse_column(col: Any) -> dict[str, str]:
+    """Handle both LogsTableColumn objects and plain strings."""
+    if isinstance(col, str):
+        return {"name": col, "type": "string"}
+    return {
+        "name": getattr(col, "name", str(col)),
+        "type": getattr(col, "column_type", "string"),
+    }
+
+
+def _parse_table(table: Any) -> dict[str, Any]:
+    """Extract columns and rows from a LogsTable, handling version differences."""
+    columns = [_parse_column(col) for col in table.columns]
+    rows = [[_serialize_value(cell) for cell in row] for row in table.rows]
+    return {"columns": columns, "rows": rows}
+
+
 async def execute_kql(kql: str, workspace_id: str | None = None) -> dict[str, Any]:
     """Execute a KQL query against Log Analytics and return tabular results."""
     ws_id = workspace_id or settings.WORKSPACE_ID
@@ -70,21 +87,15 @@ async def execute_kql(kql: str, workspace_id: str | None = None) -> dict[str, An
         table = response.tables[0] if response.tables else None
         if not table:
             return {"columns": [], "rows": []}
-
-        columns = [{"name": col.name, "type": col.column_type} for col in table.columns]
-        rows = [[_serialize_value(cell) for cell in row] for row in table.rows]
-
-        return {"columns": columns, "rows": rows}
+        return _parse_table(table)
 
     elif response.status == LogsQueryStatus.PARTIAL:
         table = response.partial_data[0] if response.partial_data else None
         if not table:
             return {"columns": [], "rows": []}
-
-        columns = [{"name": col.name, "type": col.column_type} for col in table.columns]
-        rows = [[_serialize_value(cell) for cell in row] for row in table.rows]
-
-        return {"columns": columns, "rows": rows, "partial": True}
+        result = _parse_table(table)
+        result["partial"] = True
+        return result
 
     else:
         raise Exception("Query failed with unknown status")
