@@ -1,109 +1,313 @@
-import type { ReactNode } from "react";
-import { Link } from "react-router-dom";
+import { type ReactNode, useState, useEffect } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../auth";
-import { InviteButton } from "./InviteButton";
+import { api } from "../api/client";
 
 interface LayoutProps {
   children: ReactNode;
 }
 
-function EtoroLogo() {
+interface MyPermission {
+  dashboard_id: string;
+  dashboard_title: string;
+  role: string;
+}
+
+/* ── eToro logo (compact) ──────────────────────────────────── */
+function EtoroMark() {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      width="82"
-      height="26"
+      width="28"
+      height="28"
       fill="none"
-      viewBox="0 0 102 32"
+      viewBox="0 0 32 32"
     >
       <path
+        fill="#13C636"
         fillRule="evenodd"
         clipRule="evenodd"
-        fill="#13C636"
-        d="M9.797 10.8c.257-.231.396-.405.189-.405-.435 0-3.065.388-3.607-1.598S8.737.817 8.846.56C8.95.313 8.734 0 8.416 0c-.313 0-.543.34-.576.38C4.881 4.093.75 8.727.218 10.725c-1.347 5.058 3.859 7.108 7.145 7.483a.076.076 0 0 0 .087-.075v-1.796c0-2.424.907-4.24 2.347-5.536M92.032 10.8c-.257-.231-.396-.405-.188-.405.434 0 3.064.388 3.606-1.598S93.093.817 92.983.56c-.105-.247.112-.56.43-.56.313 0 .543.34.576.38 2.959 3.712 7.09 8.346 7.622 10.344 1.347 5.058-3.859 7.108-7.145 7.483a.076.076 0 0 1-.087-.075v-1.796c0-2.424-.907-4.24-2.347-5.536M88.574 23.713c0 1.961-2.623 3.082-4.33 3.082-1.826 0-4.41-1.12-4.41-3.082V16.8c0-1.96 2.584-2.88 4.41-2.88 1.707 0 4.33.92 4.33 2.88zm-4.33-14.076c-4.05.04-8.776 2.401-8.776 7.163v7.244c0 4.843 4.727 7.124 8.776 7.164 3.97-.04 8.697-2.321 8.697-7.164V16.8c0-4.762-4.727-7.123-8.697-7.163M58.063 23.713c0 1.961-2.623 3.082-4.33 3.082-1.825 0-4.409-1.12-4.409-3.082V16.8c0-1.96 2.584-2.88 4.409-2.88 1.707 0 4.33.92 4.33 2.88zm-4.33-14.076c-4.049.04-8.775 2.401-8.775 7.163v7.244c0 4.843 4.726 7.124 8.775 7.164 3.97-.04 8.697-2.321 8.697-7.164V16.8c0-4.762-4.727-7.123-8.697-7.163M44.63 11.214c-3.232-.882-5.621-1.251-9.085-1.252-3.465 0-5.861.37-9.087 1.248a.18.18 0 0 0-.113.288c1.105.92 1.568 2.15 1.783 3.538a27.6 27.6 0 0 1 5.233-.793v16.823c-.001.06.042.097.105.097h4.155q.108.008.106-.093V14.246c1.789.106 3.28.359 5.041.79.268-1.38.828-2.667 1.959-3.528.1-.126.014-.264-.096-.294M75.627 9.785c-.31-.044-1.228-.177-2.035-.147-3.977.154-8.475 2.52-8.475 7.162v14.311c-.002.06.041.096.105.096h4.155q.108.009.106-.093V16.8c0-1.53 1.87-2.477 3.43-2.796.453-1.526 1.344-2.627 2.708-3.731.239-.194.226-.457.006-.488M21.766 18.022a.184.184 0 0 1-.183.185h-7.964V16.75c0-1.99 2.345-2.923 4.197-2.923 1.731 0 3.951.934 3.951 2.923zm-3.95-8.54c-4.107.042-8.626 2.436-8.626 7.267v7.347c0 4.911 4.52 7.226 8.626 7.266 2.942-.03 6.292-1.256 7.887-3.858.053-.086.006-.2-.075-.248-1.406-.812-2.222-1.262-3.615-2.053-.044-.025-.091-.025-.127.035-.761 1.278-2.704 1.984-4.07 1.984-1.852 0-4.197-1.137-4.197-3.126V21.9h11.384c.608 0 1.101-.497 1.101-1.11v-4.042c0-4.83-4.262-7.225-8.288-7.266"
+        d="M21.766 18.022a.184.184 0 0 1-.183.185h-7.964V16.75c0-1.99 2.345-2.923 4.197-2.923 1.731 0 3.951.934 3.951 2.923zm-3.95-8.54c-4.107.042-8.626 2.436-8.626 7.267v7.347c0 4.911 4.52 7.226 8.626 7.266 2.942-.03 6.292-1.256 7.887-3.858.053-.086.006-.2-.075-.248-1.406-.812-2.222-1.262-3.615-2.053-.044-.025-.091-.025-.127.035-.761 1.278-2.704 1.984-4.07 1.984-1.852 0-4.197-1.137-4.197-3.126V21.9h11.384c.608 0 1.101-.497 1.101-1.11v-4.042c0-4.83-4.262-7.225-8.288-7.266"
       />
     </svg>
   );
 }
 
-export function Layout({ children }: LayoutProps) {
-  const { user, logout, isSuperAdmin } = useAuth();
+/* ── SVG icons ─────────────────────────────────────────────── */
+function DashboardIcon({ active }: { active: boolean }) {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={active ? "#13C636" : "#5c5c78"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="7" height="7" rx="1" />
+      <rect x="14" y="3" width="7" height="7" rx="1" />
+      <rect x="3" y="14" width="7" height="7" rx="1" />
+      <rect x="14" y="14" width="7" height="7" rx="1" />
+    </svg>
+  );
+}
+
+function UsersIcon({ active }: { active: boolean }) {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={active ? "#13C636" : "#5c5c78"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  );
+}
+
+function LogoutIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5c5c78" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+      <polyline points="16 17 21 12 16 7" />
+      <line x1="21" y1="12" x2="9" y2="12" />
+    </svg>
+  );
+}
+
+/* ── Monogram avatar ───────────────────────────────────────── */
+function Avatar({ name }: { name: string }) {
+  const initials = name
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
-      <header
+    <div
+      style={{
+        width: "36px",
+        height: "36px",
+        borderRadius: "50%",
+        background: "linear-gradient(135deg, #0ea02b 0%, #13C636 100%)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        color: "#fff",
+        fontSize: "0.72rem",
+        fontWeight: 700,
+        letterSpacing: "0.04em",
+        flexShrink: 0,
+      }}
+    >
+      {initials}
+    </div>
+  );
+}
+
+/* ── Sidebar nav item ──────────────────────────────────────── */
+function NavItem({
+  to,
+  label,
+  icon,
+  active,
+}: {
+  to: string;
+  label: string;
+  icon: ReactNode;
+  active: boolean;
+}) {
+  return (
+    <Link
+      to={to}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "0.7rem",
+        padding: "0.55rem 0.85rem",
+        borderRadius: "var(--radius-sm)",
+        color: active ? "var(--green)" : "var(--text-tertiary)",
+        backgroundColor: active ? "var(--green-bg)" : "transparent",
+        textDecoration: "none",
+        fontSize: "0.82rem",
+        fontWeight: active ? 600 : 400,
+        fontFamily: "var(--font-body)",
+        transition: "all 0.12s ease",
+        borderLeft: active
+          ? "2px solid var(--green)"
+          : "2px solid transparent",
+      }}
+    >
+      {icon}
+      {label}
+    </Link>
+  );
+}
+
+/* ── Layout with sidebar ───────────────────────────────────── */
+export function Layout({ children }: LayoutProps) {
+  const { user, logout, isSuperAdmin, getAccessToken } = useAuth();
+  const location = useLocation();
+  const [myPerms, setMyPerms] = useState<MyPermission[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    getAccessToken(["openid"])
+      .then((token) => api.get<{ permissions: MyPermission[] }>("/users/me/permissions", token))
+      .then((data) => { if (!cancelled) setMyPerms(data.permissions); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [getAccessToken]);
+
+  const isActive = (path: string) =>
+    location.pathname === path || location.pathname.startsWith(path + "/");
+
+  return (
+    <div style={{ display: "flex", height: "100vh" }}>
+      {/* ── Sidebar ── */}
+      <aside
         style={{
+          width: "220px",
+          flexShrink: 0,
           display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "0 1.5rem",
-          height: "56px",
+          flexDirection: "column",
           backgroundColor: "var(--surface-1)",
-          borderBottom: "1px solid var(--border)",
+          borderRight: "1px solid var(--border)",
         }}
       >
-        <Link
-          to="/dashboards"
+        {/* Logo */}
+        <div
           style={{
+            padding: "1.1rem 1rem",
             display: "flex",
             alignItems: "center",
-            gap: "0.75rem",
-            textDecoration: "none",
+            gap: "0.6rem",
+            borderBottom: "1px solid var(--border)",
           }}
         >
-          <EtoroLogo />
-          <div
-            style={{
-              width: "1px",
-              height: "20px",
-              backgroundColor: "var(--border)",
-              margin: "0 0.15rem",
-            }}
-          />
+          <EtoroMark />
           <span
             style={{
               color: "var(--text-secondary)",
-              fontSize: "0.82rem",
-              fontWeight: 500,
-              letterSpacing: "0.02em",
+              fontSize: "0.78rem",
+              fontWeight: 600,
+              letterSpacing: "0.03em",
             }}
           >
             KQL Dashboard
           </span>
-        </Link>
+        </div>
 
-        <div
-          style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}
+        {/* Navigation */}
+        <nav
+          style={{
+            padding: "0.75rem 0.6rem",
+            display: "flex",
+            flexDirection: "column",
+            gap: "0.2rem",
+            flex: 1,
+          }}
         >
+          <NavItem
+            to="/dashboards"
+            label="Dashboards"
+            icon={<DashboardIcon active={isActive("/dashboards")} />}
+            active={isActive("/dashboards")}
+          />
           {isSuperAdmin && (
-            <Link
+            <NavItem
               to="/admin"
+              label="Users"
+              icon={<UsersIcon active={isActive("/admin")} />}
+              active={isActive("/admin")}
+            />
+          )}
+        </nav>
+
+        {/* ── Bottom: User profile ── */}
+        <div
+          style={{
+            borderTop: "1px solid var(--border)",
+            padding: "0.85rem 0.85rem",
+            display: "flex",
+            flexDirection: "column",
+            gap: "0.65rem",
+          }}
+        >
+          {/* Avatar + name */}
+          <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+            <Avatar name={user?.name || "?"} />
+            <div style={{ overflow: "hidden" }}>
+              <div
+                style={{
+                  color: "var(--text-primary)",
+                  fontSize: "0.78rem",
+                  fontWeight: 500,
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                {user?.name}
+              </div>
+              <div
+                style={{
+                  color: "var(--text-tertiary)",
+                  fontSize: "0.68rem",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                {user?.username}
+              </div>
+            </div>
+          </div>
+
+          {/* Permissions badges */}
+          {myPerms.length > 0 && (
+            <div
               style={{
-                padding: "0.3rem 0.7rem",
-                fontSize: "0.75rem",
-                color: "var(--text-tertiary)",
-                border: "1px solid var(--border)",
-                borderRadius: "var(--radius-sm)",
-                fontFamily: "var(--font-body)",
-                textDecoration: "none",
-                transition: "all 0.15s ease",
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "0.25rem",
               }}
             >
-              Admin
-            </Link>
+              {myPerms.slice(0, 4).map((p) => (
+                <span
+                  key={p.dashboard_id}
+                  title={`${p.dashboard_title}: ${p.role}`}
+                  style={{
+                    fontSize: "0.6rem",
+                    padding: "0.1rem 0.35rem",
+                    backgroundColor: "var(--green-bg)",
+                    color: "var(--green)",
+                    borderRadius: "3px",
+                    fontWeight: 500,
+                    textTransform: "capitalize",
+                    maxWidth: "90px",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {p.role}
+                </span>
+              ))}
+              {myPerms.length > 4 && (
+                <span
+                  style={{
+                    fontSize: "0.6rem",
+                    color: "var(--text-tertiary)",
+                    padding: "0.1rem 0.2rem",
+                  }}
+                >
+                  +{myPerms.length - 4}
+                </span>
+              )}
+            </div>
           )}
-          {isSuperAdmin && <InviteButton />}
-          {user && (
-            <span
-              style={{ fontSize: "0.8rem", color: "var(--text-tertiary)" }}
-            >
-              {user.name}
-            </span>
-          )}
+
+          {/* Logout */}
           <button
             onClick={() => logout()}
             style={{
-              padding: "0.3rem 0.7rem",
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem",
+              padding: "0.4rem 0.5rem",
               fontSize: "0.75rem",
               cursor: "pointer",
               backgroundColor: "transparent",
@@ -111,7 +315,9 @@ export function Layout({ children }: LayoutProps) {
               border: "1px solid var(--border)",
               borderRadius: "var(--radius-sm)",
               fontFamily: "var(--font-body)",
-              transition: "all 0.15s ease",
+              transition: "all 0.12s ease",
+              width: "100%",
+              justifyContent: "center",
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.borderColor = "var(--border-hover)";
@@ -122,11 +328,13 @@ export function Layout({ children }: LayoutProps) {
               e.currentTarget.style.color = "var(--text-tertiary)";
             }}
           >
+            <LogoutIcon />
             Sign out
           </button>
         </div>
-      </header>
+      </aside>
 
+      {/* ── Main content ── */}
       <main
         style={{
           flex: 1,
