@@ -186,6 +186,22 @@ export function LoginPage() {
             </button>
           </form>
 
+          <p style={{ textAlign: 'center', marginTop: '1.25rem', fontSize: '0.82rem' }}>
+            <button
+              onClick={() => navigate('/register?token=')}
+              style={{
+                color: 'var(--green)',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                fontFamily: 'var(--font-body)',
+                fontSize: '0.82rem',
+              }}
+            >
+              Don't have an account? Register
+            </button>
+          </p>
+
           {/* Divider — only shown if Entra SSO env vars are set or dev mode */}
           {!DEV_MODE && (import.meta.env.VITE_CLIENT_ID || import.meta.env.VITE_TENANT_ID) && (
             <>
