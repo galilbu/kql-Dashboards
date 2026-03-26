@@ -41,7 +41,7 @@ jobs:
           VITE_API_BASE_URL: /api
 
       - name: Upload frontend artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: frontend-dist
           path: frontend/dist
@@ -88,7 +88,7 @@ jobs:
             --exclude ".env"
 
       - name: Upload API artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: api-zip
           path: api.zip
