@@ -65,20 +65,42 @@ export function Panel({ panel, dashboardId, editMode, onUpdate, onRemove }: Pane
         overflow: 'hidden',
       }}
     >
-      {/* Header — only draggable in edit mode */}
+      {/* Header */}
       <div
-        className={editMode ? "panel-drag-handle" : undefined}
         style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '0.4rem 0.7rem',
           backgroundColor: 'var(--surface-3)',
-          cursor: editMode ? 'grab' : 'default',
           borderBottom: '1px solid var(--border)',
           minHeight: '32px',
         }}
       >
+        {/* Drag grip — only this small area is draggable */}
+        {editMode && (
+          <div
+            className="panel-drag-handle"
+            style={{
+              cursor: 'grab',
+              padding: '0 0.3rem 0 0',
+              display: 'flex',
+              alignItems: 'center',
+              color: 'var(--text-tertiary)',
+              flexShrink: 0,
+            }}
+            title="Drag to move"
+          >
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+              <circle cx="5" cy="3" r="1.5" />
+              <circle cx="11" cy="3" r="1.5" />
+              <circle cx="5" cy="8" r="1.5" />
+              <circle cx="11" cy="8" r="1.5" />
+              <circle cx="5" cy="13" r="1.5" />
+              <circle cx="11" cy="13" r="1.5" />
+            </svg>
+          </div>
+        )}
         <input
           value={panel.title}
           onChange={(e) => onUpdate({ title: e.target.value })}

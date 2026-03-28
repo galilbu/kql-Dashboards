@@ -1,16 +1,9 @@
-import { type ReactNode, useState, useEffect } from "react";
+import { type ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../auth";
-import { api } from "../api/client";
 
 interface LayoutProps {
   children: ReactNode;
-}
-
-interface MyPermission {
-  dashboard_id: string;
-  dashboard_title: string;
-  role: string;
 }
 
 /* ── eToro logo (compact) ──────────────────────────────────── */
@@ -41,17 +34,6 @@ function DashboardIcon({ active }: { active: boolean }) {
       <rect x="14" y="3" width="7" height="7" rx="1" />
       <rect x="3" y="14" width="7" height="7" rx="1" />
       <rect x="14" y="14" width="7" height="7" rx="1" />
-    </svg>
-  );
-}
-
-function UsersIcon({ active }: { active: boolean }) {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={active ? "#13C636" : "#5c5c78"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-      <circle cx="9" cy="7" r="4" />
-      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
     </svg>
   );
 }
@@ -138,18 +120,8 @@ function NavItem({
 
 /* ── Layout with sidebar ───────────────────────────────────── */
 export function Layout({ children }: LayoutProps) {
-  const { user, logout, isSuperAdmin, getAccessToken } = useAuth();
+  const { user, logout } = useAuth();
   const location = useLocation();
-  const [myPerms, setMyPerms] = useState<MyPermission[]>([]);
-
-  useEffect(() => {
-    let cancelled = false;
-    getAccessToken(["openid"])
-      .then((token) => api.get<{ permissions: MyPermission[] }>("/users/me/permissions", token))
-      .then((data) => { if (!cancelled) setMyPerms(data.permissions); })
-      .catch(() => {});
-    return () => { cancelled = true; };
-  }, [getAccessToken]);
 
   const isActive = (path: string) =>
     location.pathname === path || location.pathname.startsWith(path + "/");
@@ -206,14 +178,6 @@ export function Layout({ children }: LayoutProps) {
             icon={<DashboardIcon active={isActive("/dashboards")} />}
             active={isActive("/dashboards")}
           />
-          {isSuperAdmin && (
-            <NavItem
-              to="/admin"
-              label="Users"
-              icon={<UsersIcon active={isActive("/admin")} />}
-              active={isActive("/admin")}
-            />
-          )}
         </nav>
 
         {/* ── Bottom: User profile ── */}
@@ -255,50 +219,6 @@ export function Layout({ children }: LayoutProps) {
               </div>
             </div>
           </div>
-
-          {/* Permissions badges */}
-          {myPerms.length > 0 && (
-            <div
-              style={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: "0.25rem",
-              }}
-            >
-              {myPerms.slice(0, 4).map((p) => (
-                <span
-                  key={p.dashboard_id}
-                  title={`${p.dashboard_title}: ${p.role}`}
-                  style={{
-                    fontSize: "0.6rem",
-                    padding: "0.1rem 0.35rem",
-                    backgroundColor: "var(--green-bg)",
-                    color: "var(--green)",
-                    borderRadius: "3px",
-                    fontWeight: 500,
-                    textTransform: "capitalize",
-                    maxWidth: "90px",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {p.role}
-                </span>
-              ))}
-              {myPerms.length > 4 && (
-                <span
-                  style={{
-                    fontSize: "0.6rem",
-                    color: "var(--text-tertiary)",
-                    padding: "0.1rem 0.2rem",
-                  }}
-                >
-                  +{myPerms.length - 4}
-                </span>
-              )}
-            </div>
-          )}
 
           {/* Logout */}
           <button
