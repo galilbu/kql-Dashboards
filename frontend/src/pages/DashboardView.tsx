@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import RGL from 'react-grid-layout';
+import { GridLayout } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
 
 import { api } from '../api/client';
@@ -15,20 +15,16 @@ interface LayoutItem {
   y: number;
   w: number;
   h: number;
+  static?: boolean;
 }
 
-const GridLayout = RGL as unknown as React.ComponentType<{
-  className?: string;
-  layout: LayoutItem[];
-  cols: number;
-  rowHeight: number;
-  width: number;
-  onLayoutChange?: (layout: LayoutItem[]) => void;
-  draggableHandle?: string;
-  isDraggable?: boolean;
-  isResizable?: boolean;
-  children: React.ReactNode;
-}>;
+const REFRESH_OPTIONS = [
+  { label: 'Off', value: 0 },
+  { label: '1 min', value: 60_000 },
+  { label: '5 min', value: 300_000 },
+  { label: '10 min', value: 600_000 },
+  { label: '30 min', value: 1_800_000 },
+];
 
 const btnGhost: React.CSSProperties = {
   padding: '0.4rem 0.85rem',
@@ -54,6 +50,13 @@ export function DashboardView() {
   const [showShare, setShowShare] = useState(false);
   const [editMode, setEditMode] = useState(false);
 
+  // Refresh state
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [autoRefreshMs, setAutoRefreshMs] = useState(0);
+  const [showRefreshMenu, setShowRefreshMenu] = useState(false);
+  const autoRefreshTimer = useRef<ReturnType<typeof setInterval>>(undefined);
+  const refreshMenuRef = useRef<HTMLDivElement>(null);
+
   const fetchDashboard = useCallback(async () => {
     if (!id) return;
     try {
@@ -72,6 +75,28 @@ export function DashboardView() {
   useEffect(() => {
     fetchDashboard();
   }, [fetchDashboard]);
+
+  // Auto-refresh interval
+  useEffect(() => {
+    clearInterval(autoRefreshTimer.current);
+    if (autoRefreshMs > 0) {
+      autoRefreshTimer.current = setInterval(() => {
+        setRefreshKey((k) => k + 1);
+      }, autoRefreshMs);
+    }
+    return () => clearInterval(autoRefreshTimer.current);
+  }, [autoRefreshMs]);
+
+  // Close refresh menu on outside click
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (refreshMenuRef.current && !refreshMenuRef.current.contains(e.target as Node)) {
+        setShowRefreshMenu(false);
+      }
+    };
+    if (showRefreshMenu) document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [showRefreshMenu]);
 
   const savePanels = useCallback(
     async (updatedPanels: PanelConfig[]) => {
@@ -117,7 +142,7 @@ export function DashboardView() {
   // Debounce layout saves to prevent flickering from rapid onLayoutChange calls
   const saveTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  const onLayoutChange = (layout: LayoutItem[]) => {
+  const onLayoutChange = (layout: readonly LayoutItem[]) => {
     const updated = panels.map((panel) => {
       const item = layout.find((l) => l.i === panel.id);
       if (item) {
@@ -126,9 +151,12 @@ export function DashboardView() {
       return panel;
     });
     setPanels(updated);
-    // Debounce the API save — only save after 500ms of no changes
     clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => savePanels(updated), 500);
+  };
+
+  const handleManualRefresh = () => {
+    setRefreshKey((k) => k + 1);
   };
 
   if (loading) {
@@ -156,6 +184,8 @@ export function DashboardView() {
     );
   }
 
+  const activeRefreshLabel = REFRESH_OPTIONS.find((o) => o.value === autoRefreshMs)?.label || 'Off';
+
   return (
     <div style={{ padding: '1.5rem 1.75rem', animation: 'fadeIn 0.3s ease both' }}>
       {/* Toolbar */}
@@ -175,7 +205,102 @@ export function DashboardView() {
             </p>
           )}
         </div>
-        <div style={{ display: 'flex', gap: '0.4rem' }}>
+        <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+          {/* Refresh button + auto-refresh dropdown */}
+          <div style={{ position: 'relative', display: 'flex', gap: 0 }} ref={refreshMenuRef}>
+            <button
+              onClick={handleManualRefresh}
+              style={{
+                ...btnGhost,
+                borderTopRightRadius: 0,
+                borderBottomRightRadius: 0,
+                borderRight: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--border-hover)')}
+              onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--border)')}
+              title="Refresh all panels"
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="23 4 23 10 17 10" />
+                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+              </svg>
+              Refresh
+            </button>
+            <button
+              onClick={() => setShowRefreshMenu(!showRefreshMenu)}
+              style={{
+                ...btnGhost,
+                borderTopLeftRadius: 0,
+                borderBottomLeftRadius: 0,
+                padding: '0.4rem 0.4rem',
+                fontSize: '0.65rem',
+                ...(autoRefreshMs > 0 ? {
+                  backgroundColor: 'var(--green-bg)',
+                  color: 'var(--green)',
+                  borderColor: 'var(--green-border)',
+                } : {}),
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.borderColor = autoRefreshMs > 0 ? 'var(--green-border)' : 'var(--border-hover)')}
+              onMouseLeave={(e) => (e.currentTarget.style.borderColor = autoRefreshMs > 0 ? 'var(--green-border)' : 'var(--border)')}
+              title={`Auto-refresh: ${activeRefreshLabel}`}
+            >
+              ▼
+            </button>
+            {showRefreshMenu && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '100%',
+                  right: 0,
+                  marginTop: '0.3rem',
+                  backgroundColor: 'var(--surface-2)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 'var(--radius-sm)',
+                  boxShadow: 'var(--shadow-md)',
+                  zIndex: 100,
+                  minWidth: '120px',
+                  overflow: 'hidden',
+                }}
+              >
+                {REFRESH_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => {
+                      setAutoRefreshMs(opt.value);
+                      setShowRefreshMenu(false);
+                    }}
+                    style={{
+                      display: 'block',
+                      width: '100%',
+                      textAlign: 'left',
+                      padding: '0.45rem 0.75rem',
+                      backgroundColor: autoRefreshMs === opt.value ? 'var(--green-bg)' : 'transparent',
+                      color: autoRefreshMs === opt.value ? 'var(--green)' : 'var(--text-secondary)',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontSize: '0.78rem',
+                      fontFamily: 'var(--font-body)',
+                      fontWeight: autoRefreshMs === opt.value ? 600 : 400,
+                      transition: 'background-color 0.1s',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (autoRefreshMs !== opt.value) e.currentTarget.style.backgroundColor = 'var(--surface-3)';
+                    }}
+                    onMouseLeave={(e) => {
+                      if (autoRefreshMs !== opt.value) e.currentTarget.style.backgroundColor = 'transparent';
+                    }}
+                  >
+                    {opt.label}
+                    {autoRefreshMs === opt.value && ' ✓'}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
           <button
             onClick={() => navigate('/dashboards')}
             style={btnGhost}
@@ -229,14 +354,24 @@ export function DashboardView() {
 
       <GridLayout
         className="layout"
-        layout={panels.map((p) => ({ i: p.id, x: p.x, y: p.y, w: p.w, h: p.h }))}
-        cols={12}
-        rowHeight={80}
-        width={window.innerWidth - 56}
+        layout={panels.map((p) => ({
+          i: p.id, x: p.x, y: p.y, w: p.w, h: p.h,
+          static: !editMode,
+        }))}
+        width={window.innerWidth - 260}
         onLayoutChange={editMode ? onLayoutChange : undefined}
-        draggableHandle=".panel-drag-handle"
-        isDraggable={editMode}
-        isResizable={editMode}
+        dragConfig={{
+          enabled: editMode,
+          handle: '.panel-drag-handle',
+          cancel: 'input, select, button, textarea, .cm-editor',
+        }}
+        resizeConfig={{
+          enabled: editMode,
+        }}
+        gridConfig={{
+          cols: 12,
+          rowHeight: 80,
+        }}
       >
         {panels.map((panel) => (
           <div key={panel.id}>
@@ -244,6 +379,7 @@ export function DashboardView() {
               panel={panel}
               dashboardId={id!}
               editMode={editMode}
+              refreshKey={refreshKey}
               onUpdate={(updates) => updatePanel(panel.id, updates)}
               onRemove={() => removePanel(panel.id)}
             />

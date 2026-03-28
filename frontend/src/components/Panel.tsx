@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { PanelConfig, QueryResult } from '../types';
 import { KqlEditor } from './KqlEditor';
 import { ChartRenderer } from './ChartRenderer';
@@ -10,6 +10,7 @@ interface PanelProps {
   panel: PanelConfig;
   dashboardId: string;
   editMode?: boolean;
+  refreshKey?: number;
   onUpdate: (updates: Partial<PanelConfig>) => void;
   onRemove: () => void;
 }
@@ -26,14 +27,24 @@ const smallBtn: React.CSSProperties = {
   transition: 'all 0.15s ease',
 };
 
-export function Panel({ panel, dashboardId, editMode, onUpdate, onRemove }: PanelProps) {
+export function Panel({ panel, dashboardId, editMode, refreshKey, onUpdate, onRemove }: PanelProps) {
   const [result, setResult] = useState<QueryResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState(!panel.kql);
   const { getAccessToken } = useAuth();
+  const lastRefreshKey = useRef(refreshKey);
 
-  const runQuery = async () => {
+  // Re-run query when refreshKey changes (manual or auto-refresh)
+  useEffect(() => {
+    if (refreshKey !== undefined && refreshKey !== lastRefreshKey.current && panel.kql.trim()) {
+      lastRefreshKey.current = refreshKey;
+      runQueryInternal();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshKey]);
+
+  const runQueryInternal = async () => {
     if (!panel.kql.trim()) return;
     setLoading(true);
     setError(null);
@@ -154,7 +165,7 @@ export function Panel({ panel, dashboardId, editMode, onUpdate, onRemove }: Pane
           />
           <div style={{ padding: '0.35rem 0.7rem', display: 'flex', gap: '0.4rem' }}>
             <button
-              onClick={runQuery}
+              onClick={runQueryInternal}
               disabled={loading}
               style={{
                 padding: '0.3rem 0.75rem',
