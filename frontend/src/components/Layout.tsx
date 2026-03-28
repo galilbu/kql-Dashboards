@@ -2,6 +2,18 @@ import { type ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../auth";
 
+/* ── SVG icons ─────────────────────────────────────────────── */
+function UsersIcon({ active }: { active: boolean }) {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={active ? "#13C636" : "#5c5c78"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  );
+}
+
 interface LayoutProps {
   children: ReactNode;
 }
@@ -120,7 +132,7 @@ function NavItem({
 
 /* ── Layout with sidebar ───────────────────────────────────── */
 export function Layout({ children }: LayoutProps) {
-  const { user, logout } = useAuth();
+  const { user, logout, isSuperAdmin } = useAuth();
   const location = useLocation();
 
   const isActive = (path: string) =>
@@ -178,6 +190,14 @@ export function Layout({ children }: LayoutProps) {
             icon={<DashboardIcon active={isActive("/dashboards")} />}
             active={isActive("/dashboards")}
           />
+          {isSuperAdmin && (
+            <NavItem
+              to="/admin"
+              label="Users"
+              icon={<UsersIcon active={isActive("/admin")} />}
+              active={isActive("/admin")}
+            />
+          )}
         </nav>
 
         {/* ── Bottom: User profile ── */}

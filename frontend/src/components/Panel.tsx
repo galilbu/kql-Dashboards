@@ -63,6 +63,7 @@ export function Panel({ panel, dashboardId, editMode, onUpdate, onRemove }: Pane
         borderRadius: 'var(--radius-md)',
         border: '1px solid var(--border)',
         overflow: 'hidden',
+        position: 'relative',
       }}
     >
       {/* Header */}
@@ -77,30 +78,6 @@ export function Panel({ panel, dashboardId, editMode, onUpdate, onRemove }: Pane
           minHeight: '32px',
         }}
       >
-        {/* Drag grip — only this small area is draggable */}
-        {editMode && (
-          <div
-            className="panel-drag-handle"
-            style={{
-              cursor: 'grab',
-              padding: '0 0.3rem 0 0',
-              display: 'flex',
-              alignItems: 'center',
-              color: 'var(--text-tertiary)',
-              flexShrink: 0,
-            }}
-            title="Drag to move"
-          >
-            <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
-              <circle cx="5" cy="3" r="1.5" />
-              <circle cx="11" cy="3" r="1.5" />
-              <circle cx="5" cy="8" r="1.5" />
-              <circle cx="11" cy="8" r="1.5" />
-              <circle cx="5" cy="13" r="1.5" />
-              <circle cx="11" cy="13" r="1.5" />
-            </svg>
-          </div>
-        )}
         <input
           value={panel.title}
           onChange={(e) => onUpdate({ title: e.target.value })}
@@ -240,6 +217,68 @@ export function Panel({ panel, dashboardId, editMode, onUpdate, onRemove }: Pane
           </div>
         )}
       </div>
+
+      {/* Bottom-corner drag handles — only in edit mode */}
+      {editMode && (
+        <>
+          <div
+            className="panel-drag-handle"
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              width: '28px',
+              height: '28px',
+              cursor: 'grab',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--text-tertiary)',
+              opacity: 0.5,
+              transition: 'opacity 0.15s ease',
+              zIndex: 1,
+            }}
+            title="Drag to move"
+            onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
+            onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.5')}
+          >
+            <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor">
+              <circle cx="4" cy="4" r="1.5" />
+              <circle cx="10" cy="4" r="1.5" />
+              <circle cx="4" cy="10" r="1.5" />
+              <circle cx="10" cy="10" r="1.5" />
+            </svg>
+          </div>
+          <div
+            className="panel-drag-handle"
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              right: 0,
+              width: '28px',
+              height: '28px',
+              cursor: 'grab',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--text-tertiary)',
+              opacity: 0.5,
+              transition: 'opacity 0.15s ease',
+              zIndex: 1,
+            }}
+            title="Drag to move"
+            onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
+            onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.5')}
+          >
+            <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor">
+              <circle cx="4" cy="4" r="1.5" />
+              <circle cx="10" cy="4" r="1.5" />
+              <circle cx="4" cy="10" r="1.5" />
+              <circle cx="10" cy="10" r="1.5" />
+            </svg>
+          </div>
+        </>
+      )}
     </div>
   );
 }

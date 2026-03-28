@@ -3,19 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { api } from "../api/client";
 import { useAuth } from "../auth";
 import type { Dashboard } from "../types";
-import { InviteDialog } from "../components/InviteDialog";
 
 interface MyPermission {
   dashboard_id: string;
   dashboard_title: string;
   role: string;
-}
-
-interface LocalUser {
-  id: string;
-  email: string;
-  display_name: string;
-  created_at: string;
 }
 
 const inputStyle: React.CSSProperties = {
@@ -32,6 +24,12 @@ const inputStyle: React.CSSProperties = {
   transition: "border-color 0.15s ease",
 };
 
+const roleBadgeColors: Record<string, { bg: string; color: string }> = {
+  admin: { bg: "var(--green-bg)", color: "var(--green)" },
+  editor: { bg: "rgba(59,130,246,0.1)", color: "#60a5fa" },
+  viewer: { bg: "rgba(156,163,175,0.12)", color: "#9ca3af" },
+};
+
 export function DashboardList() {
   const [dashboards, setDashboards] = useState<Dashboard[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,32 +37,18 @@ export function DashboardList() {
   const [newTitle, setNewTitle] = useState("");
   const [newDesc, setNewDesc] = useState("");
   const [myPerms, setMyPerms] = useState<MyPermission[]>([]);
-  const [users, setUsers] = useState<LocalUser[]>([]);
-  const [tab, setTab] = useState<"dashboards" | "permissions" | "users">("dashboards");
-  const [showInvite, setShowInvite] = useState(false);
-  const { getAccessToken, isSuperAdmin } = useAuth();
+  const { getAccessToken } = useAuth();
   const navigate = useNavigate();
 
   const fetchDashboards = useCallback(async () => {
     try {
       const token = await getAccessToken(["openid"]);
-      const data = await api.get<{ dashboards: Dashboard[] }>(
-        "/dashboards",
-        token,
-      );
-      setDashboards(data.dashboards);
-      const permsData = await api.get<{ permissions: MyPermission[] }>(
-        "/users/me/permissions",
-        token,
-      );
+      const [dashData, permsData] = await Promise.all([
+        api.get<{ dashboards: Dashboard[] }>("/dashboards", token),
+        api.get<{ permissions: MyPermission[] }>("/users/me/permissions", token),
+      ]);
+      setDashboards(dashData.dashboards);
       setMyPerms(permsData.permissions);
-      // Super admins also fetch user list
-      try {
-        const usersData = await api.get<{ users: LocalUser[] }>("/admin/users", token);
-        setUsers(usersData.users);
-      } catch {
-        // Not a super admin — ignore
-      }
     } catch (err) {
       console.error("Failed to fetch dashboards:", err);
     } finally {
@@ -94,17 +78,11 @@ export function DashboardList() {
     }
   };
 
-  const handleDeleteUser = async (userId: string, email: string) => {
-    if (!confirm(`Delete user ${email}? This will revoke all their permissions.`))
-      return;
-    try {
-      const token = await getAccessToken(["openid"]);
-      await api.delete("/admin/users/" + userId, token);
-      fetchDashboards();
-    } catch (err) {
-      console.error("Failed to delete user:", err);
-    }
-  };
+  // Build a lookup: dashboard_id → role
+  const roleByDashboard: Record<string, string> = {};
+  for (const p of myPerms) {
+    roleByDashboard[p.dashboard_id] = p.role;
+  }
 
   if (loading) {
     return (
@@ -123,19 +101,6 @@ export function DashboardList() {
     );
   }
 
-  const tabStyle = (active: boolean): React.CSSProperties => ({
-    padding: "0.5rem 1rem",
-    fontSize: "0.82rem",
-    fontFamily: "var(--font-body)",
-    fontWeight: active ? 600 : 400,
-    color: active ? "var(--green)" : "var(--text-tertiary)",
-    backgroundColor: "transparent",
-    border: "none",
-    borderBottom: active ? "2px solid var(--green)" : "2px solid transparent",
-    cursor: "pointer",
-    transition: "all 0.15s ease",
-  });
-
   return (
     <div
       style={{
@@ -145,365 +110,206 @@ export function DashboardList() {
         animation: "fadeIn 0.35s ease both",
       }}
     >
-      {showInvite && <InviteDialog onClose={() => setShowInvite(false)} />}
-
       {/* Header */}
       <div
         style={{
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          marginBottom: "1.25rem",
-        }}
-      >
-        <h1>Home</h1>
-        <div style={{ display: "flex", gap: "0.4rem" }}>
-        {tab === "users" && isSuperAdmin && (
-          <button
-            onClick={() => setShowInvite(true)}
-            style={{
-              padding: "0.5rem 1.1rem",
-              backgroundColor: "var(--green)",
-              color: "var(--text-inverse)",
-              border: "none",
-              borderRadius: "var(--radius-sm)",
-              cursor: "pointer",
-              fontSize: "0.82rem",
-              fontFamily: "var(--font-body)",
-              fontWeight: 600,
-              transition: "background-color 0.15s ease",
-            }}
-            onMouseEnter={(e) =>
-              (e.currentTarget.style.backgroundColor = "var(--green-light)")
-            }
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.backgroundColor = "var(--green)")
-            }
-          >
-            + Invite User
-          </button>
-        )}
-        {tab === "dashboards" && (
-          <button
-            onClick={() => setShowCreate(true)}
-            style={{
-              padding: "0.5rem 1.1rem",
-              backgroundColor: "var(--green)",
-              color: "var(--text-inverse)",
-              border: "none",
-              borderRadius: "var(--radius-sm)",
-              cursor: "pointer",
-              fontSize: "0.82rem",
-              fontFamily: "var(--font-body)",
-              fontWeight: 600,
-              transition: "background-color 0.15s ease",
-            }}
-            onMouseEnter={(e) =>
-              (e.currentTarget.style.backgroundColor = "var(--green-light)")
-            }
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.backgroundColor = "var(--green)")
-            }
-          >
-            + New Dashboard
-          </button>
-        )}
-        </div>
-      </div>
-
-      {/* Tabs */}
-      <div
-        style={{
-          display: "flex",
-          gap: "0.25rem",
-          borderBottom: "1px solid var(--border)",
           marginBottom: "1.5rem",
         }}
       >
+        <h1>Dashboards</h1>
         <button
-          style={tabStyle(tab === "dashboards")}
-          onClick={() => setTab("dashboards")}
+          onClick={() => setShowCreate(true)}
+          style={{
+            padding: "0.5rem 1.1rem",
+            backgroundColor: "var(--green)",
+            color: "var(--text-inverse)",
+            border: "none",
+            borderRadius: "var(--radius-sm)",
+            cursor: "pointer",
+            fontSize: "0.82rem",
+            fontFamily: "var(--font-body)",
+            fontWeight: 600,
+            transition: "background-color 0.15s ease",
+          }}
+          onMouseEnter={(e) =>
+            (e.currentTarget.style.backgroundColor = "var(--green-light)")
+          }
+          onMouseLeave={(e) =>
+            (e.currentTarget.style.backgroundColor = "var(--green)")
+          }
         >
-          Dashboards ({dashboards.length})
+          + New Dashboard
         </button>
-        <button
-          style={tabStyle(tab === "permissions")}
-          onClick={() => setTab("permissions")}
-        >
-          My Permissions ({myPerms.length})
-        </button>
-        {isSuperAdmin && (
-          <button
-            style={tabStyle(tab === "users")}
-            onClick={() => setTab("users")}
-          >
-            Users ({users.length})
-          </button>
-        )}
       </div>
 
-      {/* ── Dashboards tab ── */}
-      {tab === "dashboards" && (
-        <>
-          {showCreate && (
-            <div
+      {/* Create form */}
+      {showCreate && (
+        <div
+          style={{
+            padding: "1.25rem",
+            marginBottom: "1.5rem",
+            backgroundColor: "var(--surface-2)",
+            borderRadius: "var(--radius-md)",
+            border: "1px solid var(--border)",
+            animation: "fadeIn 0.2s ease both",
+          }}
+        >
+          <input
+            value={newTitle}
+            onChange={(e) => setNewTitle(e.target.value)}
+            placeholder="Dashboard title"
+            style={{ ...inputStyle, marginBottom: "0.6rem" }}
+            onFocus={(e) =>
+              (e.currentTarget.style.borderColor = "var(--green-border)")
+            }
+            onBlur={(e) =>
+              (e.currentTarget.style.borderColor = "var(--border)")
+            }
+            onKeyDown={(e) => e.key === "Enter" && handleCreate()}
+            autoFocus
+          />
+          <input
+            value={newDesc}
+            onChange={(e) => setNewDesc(e.target.value)}
+            placeholder="Description (optional)"
+            style={{ ...inputStyle, marginBottom: "0.85rem" }}
+            onFocus={(e) =>
+              (e.currentTarget.style.borderColor = "var(--green-border)")
+            }
+            onBlur={(e) =>
+              (e.currentTarget.style.borderColor = "var(--border)")
+            }
+            onKeyDown={(e) => e.key === "Enter" && handleCreate()}
+          />
+          <div style={{ display: "flex", gap: "0.5rem" }}>
+            <button
+              onClick={handleCreate}
               style={{
-                padding: "1.25rem",
-                marginBottom: "1.5rem",
-                backgroundColor: "var(--surface-2)",
-                borderRadius: "var(--radius-md)",
+                padding: "0.45rem 1rem",
+                backgroundColor: "var(--green)",
+                color: "var(--text-inverse)",
+                border: "none",
+                borderRadius: "var(--radius-sm)",
+                cursor: "pointer",
+                fontFamily: "var(--font-body)",
+                fontSize: "0.82rem",
+                fontWeight: 600,
+              }}
+            >
+              Create
+            </button>
+            <button
+              onClick={() => setShowCreate(false)}
+              style={{
+                padding: "0.45rem 1rem",
+                backgroundColor: "transparent",
+                color: "var(--text-secondary)",
                 border: "1px solid var(--border)",
-                animation: "fadeIn 0.2s ease both",
+                borderRadius: "var(--radius-sm)",
+                cursor: "pointer",
+                fontFamily: "var(--font-body)",
+                fontSize: "0.82rem",
               }}
             >
-              <input
-                value={newTitle}
-                onChange={(e) => setNewTitle(e.target.value)}
-                placeholder="Dashboard title"
-                style={{ ...inputStyle, marginBottom: "0.6rem" }}
-                onFocus={(e) =>
-                  (e.currentTarget.style.borderColor = "var(--green-border)")
-                }
-                onBlur={(e) =>
-                  (e.currentTarget.style.borderColor = "var(--border)")
-                }
-                onKeyDown={(e) => e.key === "Enter" && handleCreate()}
-                autoFocus
-              />
-              <input
-                value={newDesc}
-                onChange={(e) => setNewDesc(e.target.value)}
-                placeholder="Description (optional)"
-                style={{ ...inputStyle, marginBottom: "0.85rem" }}
-                onFocus={(e) =>
-                  (e.currentTarget.style.borderColor = "var(--green-border)")
-                }
-                onBlur={(e) =>
-                  (e.currentTarget.style.borderColor = "var(--border)")
-                }
-                onKeyDown={(e) => e.key === "Enter" && handleCreate()}
-              />
-              <div style={{ display: "flex", gap: "0.5rem" }}>
-                <button
-                  onClick={handleCreate}
-                  style={{
-                    padding: "0.45rem 1rem",
-                    backgroundColor: "var(--green)",
-                    color: "var(--text-inverse)",
-                    border: "none",
-                    borderRadius: "var(--radius-sm)",
-                    cursor: "pointer",
-                    fontFamily: "var(--font-body)",
-                    fontSize: "0.82rem",
-                    fontWeight: 600,
-                  }}
-                >
-                  Create
-                </button>
-                <button
-                  onClick={() => setShowCreate(false)}
-                  style={{
-                    padding: "0.45rem 1rem",
-                    backgroundColor: "transparent",
-                    color: "var(--text-secondary)",
-                    border: "1px solid var(--border)",
-                    borderRadius: "var(--radius-sm)",
-                    cursor: "pointer",
-                    fontFamily: "var(--font-body)",
-                    fontSize: "0.82rem",
-                  }}
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          )}
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
 
-          {dashboards.length === 0 ? (
-            <div
-              style={{
-                textAlign: "center",
-                padding: "3rem 2rem",
-                color: "var(--text-tertiary)",
-              }}
-            >
-              <p style={{ fontSize: "0.9rem" }}>
-                No dashboards yet. Create one to get started.
-              </p>
-            </div>
-          ) : (
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(270px, 1fr))",
-                gap: "0.75rem",
-              }}
-            >
-              {dashboards.map((d, i) => (
+      {/* Dashboard cards */}
+      {dashboards.length === 0 ? (
+        <div
+          style={{
+            textAlign: "center",
+            padding: "3rem 2rem",
+            color: "var(--text-tertiary)",
+          }}
+        >
+          <p style={{ fontSize: "0.9rem" }}>
+            No dashboards yet. Create one to get started.
+          </p>
+        </div>
+      ) : (
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(270px, 1fr))",
+            gap: "0.75rem",
+          }}
+        >
+          {dashboards.map((d, i) => {
+            const role = roleByDashboard[d.id];
+            const badge = role ? roleBadgeColors[role] || roleBadgeColors.viewer : null;
+
+            return (
+              <div
+                key={d.id}
+                onClick={() => navigate(`/dashboards/${d.id}`)}
+                style={{
+                  padding: "1.15rem 1.25rem",
+                  backgroundColor: "var(--surface-2)",
+                  borderRadius: "var(--radius-md)",
+                  border: "1px solid var(--border)",
+                  cursor: "pointer",
+                  transition: "all 0.15s ease",
+                  animation: `fadeIn 0.3s ease ${i * 0.04}s both`,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = "var(--green-border)";
+                  e.currentTarget.style.backgroundColor = "var(--surface-3)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = "var(--border)";
+                  e.currentTarget.style.backgroundColor = "var(--surface-2)";
+                }}
+              >
                 <div
-                  key={d.id}
-                  onClick={() => navigate(`/dashboards/${d.id}`)}
                   style={{
-                    padding: "1.15rem 1.25rem",
-                    backgroundColor: "var(--surface-2)",
-                    borderRadius: "var(--radius-md)",
-                    border: "1px solid var(--border)",
-                    cursor: "pointer",
-                    transition: "all 0.15s ease",
-                    animation: `fadeIn 0.3s ease ${i * 0.04}s both`,
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = "var(--green-border)";
-                    e.currentTarget.style.backgroundColor = "var(--surface-3)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = "var(--border)";
-                    e.currentTarget.style.backgroundColor = "var(--surface-2)";
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "flex-start",
+                    gap: "0.5rem",
                   }}
                 >
                   <h3 style={{ marginBottom: d.description ? "0.3rem" : 0 }}>
                     {d.title}
                   </h3>
-                  {d.description && (
-                    <p
+                  {badge && (
+                    <span
                       style={{
-                        color: "var(--text-tertiary)",
-                        fontSize: "0.8rem",
-                        lineHeight: 1.45,
+                        fontSize: "0.68rem",
+                        padding: "0.12rem 0.45rem",
+                        backgroundColor: badge.bg,
+                        color: badge.color,
+                        borderRadius: "var(--radius-sm)",
+                        fontWeight: 500,
+                        textTransform: "capitalize",
+                        whiteSpace: "nowrap",
+                        flexShrink: 0,
                       }}
                     >
-                      {d.description}
-                    </p>
+                      {role}
+                    </span>
                   )}
                 </div>
-              ))}
-            </div>
-          )}
-        </>
-      )}
-
-      {/* ── My Permissions tab ── */}
-      {tab === "permissions" && (
-        <div>
-          {myPerms.length === 0 ? (
-            <p
-              style={{
-                color: "var(--text-tertiary)",
-                fontSize: "0.85rem",
-                textAlign: "center",
-                padding: "3rem 0",
-              }}
-            >
-              You don't have specific permissions on any dashboards yet.
-            </p>
-          ) : (
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "0.5rem",
-              }}
-            >
-              {myPerms.map((p) => (
-                <div
-                  key={p.dashboard_id}
-                  onClick={() => navigate(`/dashboards/${p.dashboard_id}`)}
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    padding: "0.85rem 1rem",
-                    backgroundColor: "var(--surface-2)",
-                    borderRadius: "var(--radius-md)",
-                    border: "1px solid var(--border)",
-                    cursor: "pointer",
-                    transition: "all 0.15s ease",
-                  }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.borderColor = "var(--green-border)")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.borderColor = "var(--border)")
-                  }
-                >
-                  <span
+                {d.description && (
+                  <p
                     style={{
-                      color: "var(--text-primary)",
-                      fontSize: "0.88rem",
+                      color: "var(--text-tertiary)",
+                      fontSize: "0.8rem",
+                      lineHeight: 1.45,
                     }}
                   >
-                    {p.dashboard_title}
-                  </span>
-                  <span
-                    style={{
-                      color: "var(--green)",
-                      fontSize: "0.72rem",
-                      backgroundColor: "var(--green-bg)",
-                      padding: "0.15rem 0.5rem",
-                      borderRadius: "var(--radius-sm)",
-                      fontWeight: 500,
-                      textTransform: "capitalize",
-                    }}
-                  >
-                    {p.role}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ── Users tab (super admin only) ── */}
-      {tab === "users" && isSuperAdmin && (
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-          {users.length === 0 ? (
-            <p style={{ color: "var(--text-tertiary)", fontSize: "0.85rem", textAlign: "center", padding: "3rem 0" }}>
-              No local users registered yet.
-            </p>
-          ) : (
-            users.map((u) => (
-              <div
-                key={u.id}
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  padding: "0.85rem 1rem",
-                  backgroundColor: "var(--surface-2)",
-                  borderRadius: "var(--radius-md)",
-                  border: "1px solid var(--border)",
-                }}
-              >
-                <div>
-                  <div style={{ color: "var(--text-primary)", fontSize: "0.88rem", fontWeight: 500 }}>
-                    {u.display_name}
-                  </div>
-                  <div style={{ color: "var(--text-tertiary)", fontSize: "0.75rem", marginTop: "0.1rem" }}>
-                    {u.email}
-                    <span style={{ marginLeft: "0.5rem", color: "var(--text-tertiary)", fontSize: "0.68rem" }}>
-                      {u.created_at ? new Date(u.created_at).toLocaleDateString() : ""}
-                    </span>
-                  </div>
-                </div>
-                <button
-                  onClick={() => handleDeleteUser(u.id, u.email)}
-                  style={{
-                    backgroundColor: "transparent",
-                    color: "var(--error)",
-                    border: "1px solid var(--border)",
-                    borderRadius: "var(--radius-sm)",
-                    fontSize: "0.72rem",
-                    cursor: "pointer",
-                    padding: "0.2rem 0.5rem",
-                    fontFamily: "var(--font-body)",
-                  }}
-                >
-                  Delete
-                </button>
+                    {d.description}
+                  </p>
+                )}
               </div>
-            ))
-          )}
+            );
+          })}
         </div>
       )}
     </div>
