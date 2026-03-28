@@ -18,11 +18,11 @@ class Settings(BaseSettings):
     LOCAL_SUPER_ADMIN_EMAILS: str = ""  # comma-separated emails with super-admin rights
 
     # ── Email (SMTP) — optional, for sending invite emails ───
-    SMTP_HOST: str = ""         # e.g. smtp.office365.com
-    SMTP_PORT: int = 587        # 587 for STARTTLS, 465 for SSL
-    SMTP_USER: str = ""         # e.g. noreply@company.com
+    SMTP_HOST: str = ""  # e.g. smtp.office365.com
+    SMTP_PORT: int = 587  # 587 for STARTTLS, 465 for SSL
+    SMTP_USER: str = ""  # e.g. noreply@company.com
     SMTP_PASSWORD: str = ""
-    SMTP_FROM: str = ""         # From address (defaults to SMTP_USER)
+    SMTP_FROM: str = ""  # From address (defaults to SMTP_USER)
 
     @property
     def smtp_configured(self) -> bool:
