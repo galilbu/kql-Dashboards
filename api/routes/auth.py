@@ -30,9 +30,15 @@ router = APIRouter(tags=["auth"])
 # ── Request / response models ──────────────────────────────────────────────────
 
 
+class InviteRequest(BaseModel):
+    email: str = ""
+    frontend_origin: str = ""  # e.g. https://my-app.com
+
+
 class InviteResponse(BaseModel):
     token: str
     expires_at: str
+    email_sent: bool = False
 
 
 class RegisterRequest(BaseModel):
@@ -75,9 +81,10 @@ class TokenResponse(BaseModel):
 
 @router.post("/api/auth/invite", response_model=InviteResponse)
 async def create_invite_link(
+    body: InviteRequest = InviteRequest(),
     current_user: AuthenticatedUser = Depends(get_current_user),
 ):
-    """Generate a single-use invite link. Super admins only."""
+    """Generate a single-use invite link. Optionally sends it via email."""
     if not is_super_admin(current_user):
         raise HTTPException(
             status_code=403, detail="Only super admins can create invite links"
@@ -90,7 +97,17 @@ async def create_invite_link(
         )
 
     invite = await create_invite(created_by=current_user.oid)
-    return InviteResponse(token=invite.token, expires_at=invite.expires_at)
+
+    email_sent = False
+    if body.email and body.frontend_origin:
+        from services.email_service import send_invite_email
+
+        invite_url = f"{body.frontend_origin.rstrip('/')}/register?token={invite.token}"
+        email_sent = await send_invite_email(body.email, invite_url)
+
+    return InviteResponse(
+        token=invite.token, expires_at=invite.expires_at, email_sent=email_sent
+    )
 
 
 @router.post("/api/auth/register", response_model=TokenResponse)

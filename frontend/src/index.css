@@ -151,3 +151,9 @@ code {
   border-radius: var(--radius-md) !important;
   opacity: 1 !important;
 }
+
+/* Make resize handle visible on dark theme */
+.react-grid-item > .react-resizable-handle::after {
+  border-right: 2px solid var(--green) !important;
+  border-bottom: 2px solid var(--green) !important;
+}

@@ -367,6 +367,7 @@ export function DashboardView() {
         }}
         resizeConfig={{
           enabled: editMode,
+          handles: ['se'],
         }}
         gridConfig={{
           cols: 12,

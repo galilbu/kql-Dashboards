@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { api } from "../api/client";
+import { useAuth } from "../auth";
 
 interface InviteResponse {
   token: string;
   expires_at: string;
+  email_sent: boolean;
 }
 
 interface InviteDialogProps {
@@ -13,17 +15,24 @@ interface InviteDialogProps {
 export function InviteDialog({ onClose }: InviteDialogProps) {
   const [email, setEmail] = useState("");
   const [inviteUrl, setInviteUrl] = useState("");
+  const [emailSent, setEmailSent] = useState(false);
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const { getAccessToken } = useAuth();
 
   const handleGenerate = async () => {
     setError("");
     setLoading(true);
     try {
-      const data = await api.post<InviteResponse>("/auth/invite", {});
+      const token = await getAccessToken(["openid"]);
+      const data = await api.post<InviteResponse>("/auth/invite", {
+        email: email.trim(),
+        frontend_origin: window.location.origin,
+      }, token);
       const url = `${window.location.origin}/register?token=${data.token}`;
       setInviteUrl(url);
+      setEmailSent(data.email_sent);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to generate invite");
     } finally {
@@ -155,37 +164,71 @@ export function InviteDialog({ onClose }: InviteDialogProps) {
 
             <button
               onClick={handleGenerate}
-              disabled={loading}
+              disabled={loading || !email.trim()}
               style={{
                 width: "100%",
                 padding: "0.55rem",
-                backgroundColor: loading ? "var(--surface-4)" : "var(--green)",
-                color: loading
+                backgroundColor: loading || !email.trim() ? "var(--surface-4)" : "var(--green)",
+                color: loading || !email.trim()
                   ? "var(--text-tertiary)"
                   : "var(--text-inverse)",
                 border: "none",
                 borderRadius: "var(--radius-sm)",
-                cursor: loading ? "not-allowed" : "pointer",
+                cursor: loading || !email.trim() ? "not-allowed" : "pointer",
                 fontSize: "0.82rem",
                 fontFamily: "var(--font-body)",
                 fontWeight: 600,
               }}
             >
-              {loading ? "Generating..." : "Generate Invite Link"}
+              {loading ? "Sending..." : "Generate & Send Invite"}
             </button>
           </>
         ) : (
           <>
-            <p
-              style={{
-                color: "var(--text-secondary)",
-                fontSize: "0.82rem",
-                marginBottom: "0.75rem",
-              }}
-            >
-              Invite link generated{email ? ` for ${email}` : ""}. Share it
-              with the user:
-            </p>
+            {/* Status message */}
+            {emailSent ? (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.5rem",
+                  padding: "0.65rem 0.85rem",
+                  backgroundColor: "var(--green-bg)",
+                  borderRadius: "var(--radius-sm)",
+                  border: "1px solid var(--green-border)",
+                  marginBottom: "1rem",
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                <span style={{ color: "var(--green)", fontSize: "0.82rem", fontWeight: 500 }}>
+                  Invite sent to {email}
+                </span>
+              </div>
+            ) : (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.5rem",
+                  padding: "0.65rem 0.85rem",
+                  backgroundColor: "rgba(245, 166, 35, 0.08)",
+                  borderRadius: "var(--radius-sm)",
+                  border: "1px solid rgba(245, 166, 35, 0.2)",
+                  marginBottom: "1rem",
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--warning)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="8" x2="12" y2="12" />
+                  <line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+                <span style={{ color: "var(--warning)", fontSize: "0.82rem" }}>
+                  Email not configured on server. Share the link manually:
+                </span>
+              </div>
+            )}
 
             <div
               style={{
@@ -223,7 +266,7 @@ export function InviteDialog({ onClose }: InviteDialogProps) {
               >
                 {copied ? "Copied!" : "Copy Link"}
               </button>
-              {email && (
+              {email && !emailSent && (
                 <button
                   onClick={handleSendEmail}
                   style={{
@@ -239,7 +282,7 @@ export function InviteDialog({ onClose }: InviteDialogProps) {
                     fontWeight: 600,
                   }}
                 >
-                  Send via Email
+                  Open in Mail App
                 </button>
               )}
             </div>

@@ -17,6 +17,17 @@ class Settings(BaseSettings):
     LOCAL_JWT_SECRET: str = ""  # Secret for signing local JWTs (min 32 chars)
     LOCAL_SUPER_ADMIN_EMAILS: str = ""  # comma-separated emails with super-admin rights
 
+    # ── Email (SMTP) — optional, for sending invite emails ───
+    SMTP_HOST: str = ""         # e.g. smtp.office365.com
+    SMTP_PORT: int = 587        # 587 for STARTTLS, 465 for SSL
+    SMTP_USER: str = ""         # e.g. noreply@company.com
+    SMTP_PASSWORD: str = ""
+    SMTP_FROM: str = ""         # From address (defaults to SMTP_USER)
+
+    @property
+    def smtp_configured(self) -> bool:
+        return bool(self.SMTP_HOST and self.SMTP_USER and self.SMTP_PASSWORD)
+
     class Config:
         env_file = ".env"
         case_sensitive = True

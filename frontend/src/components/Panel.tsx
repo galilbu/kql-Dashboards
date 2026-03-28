@@ -229,66 +229,36 @@ export function Panel({ panel, dashboardId, editMode, refreshKey, onUpdate, onRe
         )}
       </div>
 
-      {/* Bottom-corner drag handles — only in edit mode */}
+      {/* Bottom-left drag handle — only in edit mode */}
       {editMode && (
-        <>
-          <div
-            className="panel-drag-handle"
-            style={{
-              position: 'absolute',
-              bottom: 0,
-              left: 0,
-              width: '28px',
-              height: '28px',
-              cursor: 'grab',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'var(--text-tertiary)',
-              opacity: 0.5,
-              transition: 'opacity 0.15s ease',
-              zIndex: 1,
-            }}
-            title="Drag to move"
-            onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
-            onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.5')}
-          >
-            <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor">
-              <circle cx="4" cy="4" r="1.5" />
-              <circle cx="10" cy="4" r="1.5" />
-              <circle cx="4" cy="10" r="1.5" />
-              <circle cx="10" cy="10" r="1.5" />
-            </svg>
-          </div>
-          <div
-            className="panel-drag-handle"
-            style={{
-              position: 'absolute',
-              bottom: 0,
-              right: 0,
-              width: '28px',
-              height: '28px',
-              cursor: 'grab',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'var(--text-tertiary)',
-              opacity: 0.5,
-              transition: 'opacity 0.15s ease',
-              zIndex: 1,
-            }}
-            title="Drag to move"
-            onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
-            onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.5')}
-          >
-            <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor">
-              <circle cx="4" cy="4" r="1.5" />
-              <circle cx="10" cy="4" r="1.5" />
-              <circle cx="4" cy="10" r="1.5" />
-              <circle cx="10" cy="10" r="1.5" />
-            </svg>
-          </div>
-        </>
+        <div
+          className="panel-drag-handle"
+          style={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            width: '28px',
+            height: '28px',
+            cursor: 'grab',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'var(--text-tertiary)',
+            opacity: 0.5,
+            transition: 'opacity 0.15s ease',
+            zIndex: 1,
+          }}
+          title="Drag to move"
+          onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
+          onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.5')}
+        >
+          <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor">
+            <circle cx="4" cy="4" r="1.5" />
+            <circle cx="10" cy="4" r="1.5" />
+            <circle cx="4" cy="10" r="1.5" />
+            <circle cx="10" cy="10" r="1.5" />
+          </svg>
+        </div>
       )}
     </div>
   );
