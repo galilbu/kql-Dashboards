@@ -8,6 +8,7 @@ from services.permissions_service import (
     revoke_permission,
     list_permissions,
 )
+from services.activity_service import log_activity
 from utils import validate_uuid
 
 router = APIRouter(tags=["permissions"])
@@ -40,6 +41,17 @@ async def add_dashboard_permission(
         role=body.role,
         granted_by=user.oid,
     )
+
+    await log_activity(
+        user_oid=user.oid,
+        user_name=user.name,
+        action="permission_grant",
+        target_type="permission",
+        target_id=dashboard_id,
+        target_name=body.user_oid,
+        details=f"role={body.role}",
+    )
+
     return permission.model_dump()
 
 
@@ -54,5 +66,14 @@ async def remove_dashboard_permission(
     deleted = await revoke_permission(dashboard_id, user_oid)
     if not deleted:
         raise HTTPException(status_code=404, detail="Permission not found")
+
+    await log_activity(
+        user_oid=user.oid,
+        user_name=user.name,
+        action="permission_revoke",
+        target_type="permission",
+        target_id=dashboard_id,
+        target_name=user_oid,
+    )
 
     return {"detail": "Permission revoked"}

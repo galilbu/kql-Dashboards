@@ -6,7 +6,18 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from config import settings
-from routes import health, dashboards, query, permissions, users, auth, admin
+from routes import (
+    health,
+    dashboards,
+    query,
+    permissions,
+    users,
+    auth,
+    admin,
+    activity,
+    actions,
+    generate,
+)
 
 structlog.configure(
     processors=[
@@ -24,7 +35,7 @@ structlog.configure(
 )
 
 # ── FastAPI application ───────────────────────────────────────
-fastapi_app = FastAPI(title="KQL Dashboard API", version="0.1.0")
+fastapi_app = FastAPI(title="SOC Portal API", version="0.1.0")
 
 fastapi_app.add_middleware(
     CORSMiddleware,
@@ -43,6 +54,9 @@ fastapi_app.include_router(query.router, prefix="/api")
 fastapi_app.include_router(permissions.router, prefix="/api")
 fastapi_app.include_router(users.router, prefix="/api")
 fastapi_app.include_router(admin.router, prefix="/api")
+fastapi_app.include_router(activity.router, prefix="/api")
+fastapi_app.include_router(actions.router, prefix="/api")
+fastapi_app.include_router(generate.router, prefix="/api")
 
 # ── Azure Functions ASGI wrapper (Flex Consumption) ──────────
 # Exposes fastapi_app as an Azure Function HTTP trigger.

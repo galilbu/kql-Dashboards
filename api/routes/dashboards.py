@@ -18,6 +18,7 @@ from services.permissions_service import (
     list_permissions,
     revoke_permission,
 )
+from services.activity_service import log_activity
 from utils import validate_uuid
 
 router = APIRouter(tags=["dashboards"])
@@ -52,6 +53,15 @@ async def create_new_dashboard(
         granted_by=user.oid,
     )
 
+    await log_activity(
+        user_oid=user.oid,
+        user_name=user.name,
+        action="dashboard_create",
+        target_type="dashboard",
+        target_id=dashboard.id,
+        target_name=body.title,
+    )
+
     return dashboard.model_dump()
 
 
@@ -79,6 +89,16 @@ async def update_existing_dashboard(
     dashboard = await update_dashboard(dashboard_id, body)
     if not dashboard:
         raise HTTPException(status_code=403, detail="Forbidden")
+
+    await log_activity(
+        user_oid=user.oid,
+        user_name=user.name,
+        action="dashboard_update",
+        target_type="dashboard",
+        target_id=dashboard_id,
+        target_name=dashboard.title,
+    )
+
     return dashboard.model_dump()
 
 
@@ -98,5 +118,13 @@ async def delete_existing_dashboard(
     deleted = await delete_dashboard(dashboard_id)
     if not deleted:
         raise HTTPException(status_code=403, detail="Forbidden")
+
+    await log_activity(
+        user_oid=user.oid,
+        user_name=user.name,
+        action="dashboard_delete",
+        target_type="dashboard",
+        target_id=dashboard_id,
+    )
 
     return {"detail": "Dashboard deleted"}

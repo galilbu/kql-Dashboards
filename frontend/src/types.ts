@@ -38,6 +38,13 @@ export interface Permission {
   granted_at: string;
 }
 
+export interface GenerateKqlResponse {
+  kql: string;
+  title: string;
+  chart_type: string;
+  explanation: string;
+}
+
 export interface UserSearchResult {
   oid: string;
   display_name: string;

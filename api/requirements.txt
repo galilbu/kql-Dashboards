@@ -4,6 +4,7 @@ uvicorn==0.34.0
 azure-data-tables==12.5.0
 azure-monitor-query==1.4.0
 azure-identity==1.19.0
+azure-keyvault-secrets==4.9.0
 python-jose[cryptography]==3.3.0
 python-dotenv==1.0.1
 httpx==0.28.1

@@ -47,9 +47,9 @@ export function InviteDialog({ onClose }: InviteDialogProps) {
   };
 
   const handleSendEmail = () => {
-    const subject = encodeURIComponent("You're invited to KQL Dashboard");
+    const subject = encodeURIComponent("You're invited to SOC Portal");
     const body = encodeURIComponent(
-      `Hi${email ? " " + email : ""},\n\nYou've been invited to join KQL Dashboard.\n\nClick here to create your account:\n${inviteUrl}\n\nThis link expires in 7 days.`,
+      `Hi${email ? " " + email : ""},\n\nYou've been invited to join SOC Portal.\n\nClick here to create your account:\n${inviteUrl}\n\nThis link expires in 7 days.`,
     );
     window.open(`mailto:${email}?subject=${subject}&body=${body}`, "_self");
   };

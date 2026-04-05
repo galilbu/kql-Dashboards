@@ -8,6 +8,8 @@ import { DashboardView } from "./pages/DashboardView";
 import { LoginPage } from "./pages/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage";
 import { AdminPage } from "./pages/AdminPage";
+import { ActivityLog } from "./pages/ActivityLog";
+import { ActionsPage } from "./pages/ActionsPage";
 
 const DEV_MODE = import.meta.env.VITE_DEV_MODE === "true";
 const msalInstance = DEV_MODE ? null : new PublicClientApplication(msalConfig);
@@ -47,6 +49,26 @@ function AppRoutes() {
             <AuthGuard>
               <Layout>
                 <AdminPage />
+              </Layout>
+            </AuthGuard>
+          }
+        />
+        <Route
+          path="/activity"
+          element={
+            <AuthGuard>
+              <Layout>
+                <ActivityLog />
+              </Layout>
+            </AuthGuard>
+          }
+        />
+        <Route
+          path="/actions"
+          element={
+            <AuthGuard>
+              <Layout>
+                <ActionsPage />
               </Layout>
             </AuthGuard>
           }

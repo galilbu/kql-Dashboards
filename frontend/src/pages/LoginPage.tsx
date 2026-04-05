@@ -82,7 +82,7 @@ export function LoginPage() {
               letterSpacing: '0.02em',
             }}
           >
-            KQL Dashboard
+            SOC Portal
           </p>
         </div>
 

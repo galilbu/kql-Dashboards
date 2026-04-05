@@ -91,7 +91,7 @@ export function RegisterPage() {
         <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
           <EtoroLogo />
           <p style={{ color: 'var(--text-tertiary)', fontSize: '0.8rem', marginTop: '0.75rem' }}>
-            KQL Dashboard
+            SOC Portal
           </p>
         </div>
 
@@ -105,7 +105,7 @@ export function RegisterPage() {
         >
           <h2 style={{ marginBottom: '0.4rem', fontSize: '1.1rem' }}>Create account</h2>
           <p style={{ color: 'var(--text-tertiary)', fontSize: '0.82rem', marginBottom: '1.5rem' }}>
-            {inviteToken ? 'You have been invited to join KQL Dashboard.' : 'Create the first admin account.'}
+            {inviteToken ? 'You have been invited to join SOC Portal.' : 'Create the first admin account.'}
           </p>
 
           <form onSubmit={handleSubmit}>

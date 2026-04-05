@@ -1,8 +1,24 @@
-import { type ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../auth";
 
 /* ── SVG icons ─────────────────────────────────────────────── */
+function ActivityIcon({ active }: { active: boolean }) {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={active ? "#13C636" : "#5c5c78"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+    </svg>
+  );
+}
+
+function ActionsIcon({ active }: { active: boolean }) {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={active ? "#13C636" : "#5c5c78"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+    </svg>
+  );
+}
+
 function UsersIcon({ active }: { active: boolean }) {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={active ? "#13C636" : "#5c5c78"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -38,7 +54,6 @@ function EtoroMark() {
   );
 }
 
-/* ── SVG icons ─────────────────────────────────────────────── */
 function DashboardIcon({ active }: { active: boolean }) {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={active ? "#13C636" : "#5c5c78"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -60,8 +75,20 @@ function LogoutIcon() {
   );
 }
 
+function CollapseIcon({ collapsed }: { collapsed: boolean }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5c5c78" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      {collapsed ? (
+        <polyline points="9 18 15 12 9 6" />
+      ) : (
+        <polyline points="15 18 9 12 15 6" />
+      )}
+    </svg>
+  );
+}
+
 /* ── Monogram avatar ───────────────────────────────────────── */
-function Avatar({ name }: { name: string }) {
+function Avatar({ name, size = 36 }: { name: string; size?: number }) {
   const initials = name
     .split(" ")
     .map((w) => w[0])
@@ -72,15 +99,15 @@ function Avatar({ name }: { name: string }) {
   return (
     <div
       style={{
-        width: "36px",
-        height: "36px",
+        width: `${size}px`,
+        height: `${size}px`,
         borderRadius: "50%",
         background: "linear-gradient(135deg, #0ea02b 0%, #13C636 100%)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         color: "#fff",
-        fontSize: "0.72rem",
+        fontSize: size < 30 ? "0.6rem" : "0.72rem",
         fontWeight: 700,
         letterSpacing: "0.04em",
         flexShrink: 0,
@@ -97,20 +124,24 @@ function NavItem({
   label,
   icon,
   active,
+  collapsed,
 }: {
   to: string;
   label: string;
   icon: ReactNode;
   active: boolean;
+  collapsed: boolean;
 }) {
   return (
     <Link
       to={to}
+      title={collapsed ? label : undefined}
       style={{
         display: "flex",
         alignItems: "center",
-        gap: "0.7rem",
-        padding: "0.55rem 0.85rem",
+        gap: collapsed ? 0 : "0.7rem",
+        justifyContent: collapsed ? "center" : "flex-start",
+        padding: collapsed ? "0.55rem" : "0.55rem 0.85rem",
         borderRadius: "var(--radius-sm)",
         color: active ? "var(--green)" : "var(--text-tertiary)",
         backgroundColor: active ? "var(--green-bg)" : "transparent",
@@ -118,14 +149,14 @@ function NavItem({
         fontSize: "0.82rem",
         fontWeight: active ? 600 : 400,
         fontFamily: "var(--font-body)",
-        transition: "all 0.12s ease",
+        transition: "all 0.15s ease",
         borderLeft: active
           ? "2px solid var(--green)"
           : "2px solid transparent",
       }}
     >
       {icon}
-      {label}
+      {!collapsed && label}
     </Link>
   );
 }
@@ -134,6 +165,9 @@ function NavItem({
 export function Layout({ children }: LayoutProps) {
   const { user, logout, isSuperAdmin } = useAuth();
   const location = useLocation();
+  const [collapsed, setCollapsed] = useState(false);
+
+  const sidebarWidth = collapsed ? "56px" : "220px";
 
   const isActive = (path: string) =>
     location.pathname === path || location.pathname.startsWith(path + "/");
@@ -143,41 +177,48 @@ export function Layout({ children }: LayoutProps) {
       {/* ── Sidebar ── */}
       <aside
         style={{
-          width: "220px",
+          width: sidebarWidth,
           flexShrink: 0,
           display: "flex",
           flexDirection: "column",
           backgroundColor: "var(--surface-1)",
           borderRight: "1px solid var(--border)",
+          transition: "width 0.2s ease",
+          overflow: "hidden",
         }}
       >
         {/* Logo */}
         <div
           style={{
-            padding: "1.1rem 1rem",
+            padding: collapsed ? "1.1rem 0.5rem" : "1.1rem 1rem",
             display: "flex",
             alignItems: "center",
+            justifyContent: collapsed ? "center" : "flex-start",
             gap: "0.6rem",
             borderBottom: "1px solid var(--border)",
+            minHeight: "52px",
           }}
         >
           <EtoroMark />
-          <span
-            style={{
-              color: "var(--text-secondary)",
-              fontSize: "0.78rem",
-              fontWeight: 600,
-              letterSpacing: "0.03em",
-            }}
-          >
-            KQL Dashboard
-          </span>
+          {!collapsed && (
+            <span
+              style={{
+                color: "var(--text-secondary)",
+                fontSize: "0.78rem",
+                fontWeight: 600,
+                letterSpacing: "0.03em",
+                whiteSpace: "nowrap",
+              }}
+            >
+              SOC Portal
+            </span>
+          )}
         </div>
 
         {/* Navigation */}
         <nav
           style={{
-            padding: "0.75rem 0.6rem",
+            padding: collapsed ? "0.75rem 0.35rem" : "0.75rem 0.6rem",
             display: "flex",
             flexDirection: "column",
             gap: "0.2rem",
@@ -189,6 +230,21 @@ export function Layout({ children }: LayoutProps) {
             label="Dashboards"
             icon={<DashboardIcon active={isActive("/dashboards")} />}
             active={isActive("/dashboards")}
+            collapsed={collapsed}
+          />
+          <NavItem
+            to="/actions"
+            label="Actions"
+            icon={<ActionsIcon active={isActive("/actions")} />}
+            active={isActive("/actions")}
+            collapsed={collapsed}
+          />
+          <NavItem
+            to="/activity"
+            label="Activity Log"
+            icon={<ActivityIcon active={isActive("/activity")} />}
+            active={isActive("/activity")}
+            collapsed={collapsed}
           />
           {isSuperAdmin && (
             <NavItem
@@ -196,57 +252,67 @@ export function Layout({ children }: LayoutProps) {
               label="Users"
               icon={<UsersIcon active={isActive("/admin")} />}
               active={isActive("/admin")}
+              collapsed={collapsed}
             />
           )}
         </nav>
 
-        {/* ── Bottom: User profile ── */}
+        {/* ── Bottom: User profile + collapse toggle ── */}
         <div
           style={{
             borderTop: "1px solid var(--border)",
-            padding: "0.85rem 0.85rem",
+            padding: collapsed ? "0.85rem 0.35rem" : "0.85rem 0.85rem",
             display: "flex",
             flexDirection: "column",
-            gap: "0.65rem",
+            gap: "0.5rem",
+            alignItems: collapsed ? "center" : "stretch",
           }}
         >
           {/* Avatar + name */}
-          <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
-            <Avatar name={user?.name || "?"} />
-            <div style={{ overflow: "hidden" }}>
-              <div
-                style={{
-                  color: "var(--text-primary)",
-                  fontSize: "0.78rem",
-                  fontWeight: 500,
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                }}
-              >
-                {user?.name}
-              </div>
-              <div
-                style={{
-                  color: "var(--text-tertiary)",
-                  fontSize: "0.68rem",
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                }}
-              >
-                {user?.username}
+          {collapsed ? (
+            <div title={user?.name || ""}>
+              <Avatar name={user?.name || "?"} size={28} />
+            </div>
+          ) : (
+            <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+              <Avatar name={user?.name || "?"} />
+              <div style={{ overflow: "hidden" }}>
+                <div
+                  style={{
+                    color: "var(--text-primary)",
+                    fontSize: "0.78rem",
+                    fontWeight: 500,
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  {user?.name}
+                </div>
+                <div
+                  style={{
+                    color: "var(--text-tertiary)",
+                    fontSize: "0.68rem",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  {user?.username}
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Logout */}
           <button
             onClick={() => logout()}
+            title={collapsed ? "Sign out" : undefined}
             style={{
               display: "flex",
               alignItems: "center",
-              gap: "0.5rem",
+              gap: collapsed ? 0 : "0.5rem",
+              justifyContent: "center",
               padding: "0.4rem 0.5rem",
               fontSize: "0.75rem",
               cursor: "pointer",
@@ -257,7 +323,6 @@ export function Layout({ children }: LayoutProps) {
               fontFamily: "var(--font-body)",
               transition: "all 0.12s ease",
               width: "100%",
-              justifyContent: "center",
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.borderColor = "var(--border-hover)";
@@ -269,7 +334,36 @@ export function Layout({ children }: LayoutProps) {
             }}
           >
             <LogoutIcon />
-            Sign out
+            {!collapsed && "Sign out"}
+          </button>
+
+          {/* Collapse toggle */}
+          <button
+            onClick={() => setCollapsed(!collapsed)}
+            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "0.3rem",
+              cursor: "pointer",
+              backgroundColor: "transparent",
+              color: "var(--text-tertiary)",
+              border: "none",
+              borderRadius: "var(--radius-sm)",
+              transition: "all 0.12s ease",
+              width: "100%",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = "var(--text-secondary)";
+              e.currentTarget.style.backgroundColor = "var(--surface-3)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = "var(--text-tertiary)";
+              e.currentTarget.style.backgroundColor = "transparent";
+            }}
+          >
+            <CollapseIcon collapsed={collapsed} />
           </button>
         </div>
       </aside>

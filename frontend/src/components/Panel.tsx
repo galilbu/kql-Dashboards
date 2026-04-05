@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import type { PanelConfig, QueryResult } from '../types';
+import type { PanelConfig, QueryResult, GenerateKqlResponse } from '../types';
 import { KqlEditor } from './KqlEditor';
 import { ChartRenderer } from './ChartRenderer';
 import { ResultsTable } from './ResultsTable';
@@ -35,6 +35,13 @@ export function Panel({ panel, dashboardId, editMode, refreshKey, onUpdate, onRe
   const { getAccessToken } = useAuth();
   const lastRefreshKey = useRef(refreshKey);
 
+  // AI generation state
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [aiGenerating, setAiGenerating] = useState(false);
+  const [aiError, setAiError] = useState('');
+  const [aiExplanation, setAiExplanation] = useState('');
+  const [showAi, setShowAi] = useState(false);
+
   // Re-run query when refreshKey changes (manual or auto-refresh)
   useEffect(() => {
     if (refreshKey !== undefined && refreshKey !== lastRefreshKey.current && panel.kql.trim()) {
@@ -61,6 +68,32 @@ export function Panel({ panel, dashboardId, editMode, refreshKey, onUpdate, onRe
       setError(err instanceof Error ? err.message : 'Query failed');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAiGenerate = async () => {
+    if (!aiPrompt.trim()) return;
+    setAiGenerating(true);
+    setAiError('');
+    setAiExplanation('');
+    try {
+      const token = await getAccessToken(['openid']);
+      const data = await api.post<GenerateKqlResponse>(
+        '/generate-kql',
+        { description: aiPrompt.trim(), dashboard_id: dashboardId },
+        token,
+      );
+      onUpdate({
+        kql: data.kql,
+        title: data.title,
+        chartType: (data.chart_type as PanelConfig['chartType']) || 'auto',
+      });
+      setAiExplanation(data.explanation);
+      setShowAi(false);
+    } catch (err: unknown) {
+      setAiError(err instanceof Error ? err.message : 'Generation failed');
+    } finally {
+      setAiGenerating(false);
     }
   };
 
@@ -158,12 +191,117 @@ export function Panel({ panel, dashboardId, editMode, refreshKey, onUpdate, onRe
       {/* Editor */}
       {editing && (
         <div style={{ borderBottom: '1px solid var(--border)' }}>
+          {/* AI Describe toggle */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.4rem',
+            padding: '0.35rem 0.7rem',
+            borderBottom: '1px solid var(--border)',
+            backgroundColor: 'var(--surface-1)',
+          }}>
+            <button
+              onClick={() => setShowAi(!showAi)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                padding: '0.25rem 0.6rem',
+                backgroundColor: showAi ? 'rgba(139, 92, 246, 0.08)' : 'transparent',
+                color: showAi ? '#a78bfa' : 'var(--text-tertiary)',
+                border: `1px solid ${showAi ? 'rgba(139, 92, 246, 0.2)' : 'var(--border)'}`,
+                borderRadius: 'var(--radius-sm)',
+                cursor: 'pointer',
+                fontSize: '0.72rem',
+                fontFamily: 'var(--font-body)',
+                fontWeight: 500,
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                <path d="M2 17l10 5 10-5" />
+                <path d="M2 12l10 5 10-5" />
+              </svg>
+              Describe with AI
+            </button>
+            {aiExplanation && !showAi && (
+              <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', fontStyle: 'italic' }}>
+                {aiExplanation}
+              </span>
+            )}
+          </div>
+
+          {/* AI Input */}
+          {showAi && (
+            <div style={{
+              padding: '0.6rem 0.7rem',
+              backgroundColor: 'rgba(139, 92, 246, 0.03)',
+              borderBottom: '1px solid var(--border)',
+            }}>
+              <textarea
+                value={aiPrompt}
+                onChange={(e) => { setAiPrompt(e.target.value); setAiError(''); }}
+                placeholder="Describe what you want to see, e.g. 'Show failed sign-ins by country in the last 24 hours'"
+                style={{
+                  width: '100%',
+                  minHeight: '52px',
+                  padding: '0.5rem 0.6rem',
+                  backgroundColor: 'var(--surface-1)',
+                  color: 'var(--text-primary)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 'var(--radius-sm)',
+                  fontSize: '0.82rem',
+                  fontFamily: 'var(--font-body)',
+                  resize: 'vertical',
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                  transition: 'border-color 0.15s ease',
+                }}
+                onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.4)')}
+                onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--border)')}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleAiGenerate();
+                  }
+                }}
+                autoFocus
+              />
+              <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.4rem', alignItems: 'center' }}>
+                <button
+                  onClick={handleAiGenerate}
+                  disabled={aiGenerating || !aiPrompt.trim()}
+                  style={{
+                    padding: '0.3rem 0.75rem',
+                    backgroundColor: aiGenerating || !aiPrompt.trim() ? 'var(--surface-4)' : '#8b5cf6',
+                    color: aiGenerating || !aiPrompt.trim() ? 'var(--text-tertiary)' : '#fff',
+                    border: 'none',
+                    borderRadius: 'var(--radius-sm)',
+                    cursor: aiGenerating || !aiPrompt.trim() ? 'not-allowed' : 'pointer',
+                    fontSize: '0.78rem',
+                    fontFamily: 'var(--font-body)',
+                    fontWeight: 600,
+                    transition: 'background-color 0.15s ease',
+                  }}
+                >
+                  {aiGenerating ? 'Generating...' : 'Generate KQL'}
+                </button>
+                {aiError && (
+                  <span style={{ fontSize: '0.75rem', color: 'var(--error)' }}>
+                    {aiError}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+
           <KqlEditor
             value={panel.kql}
             onChange={(kql) => onUpdate({ kql })}
             height="120px"
           />
-          <div style={{ padding: '0.35rem 0.7rem', display: 'flex', gap: '0.4rem' }}>
+          <div style={{ padding: '0.35rem 0.7rem', display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
             <button
               onClick={runQueryInternal}
               disabled={loading}
@@ -182,6 +320,11 @@ export function Panel({ panel, dashboardId, editMode, refreshKey, onUpdate, onRe
             >
               {loading ? 'Running...' : 'Run Query'}
             </button>
+            {aiExplanation && (
+              <span style={{ fontSize: '0.7rem', color: '#a78bfa', fontStyle: 'italic' }}>
+                AI: {aiExplanation}
+              </span>
+            )}
           </div>
         </div>
       )}

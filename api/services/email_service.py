@@ -21,27 +21,27 @@ async def send_invite_email(to_email: str, invite_url: str) -> bool:
     from_addr = settings.SMTP_FROM or settings.SMTP_USER
 
     msg = MIMEMultipart("alternative")
-    msg["Subject"] = "You're invited to KQL Dashboard"
+    msg["Subject"] = "You're invited to SOC Portal"
     msg["From"] = from_addr
     msg["To"] = to_email
 
     text_body = (
         f"Hi,\n\n"
-        f"You've been invited to join KQL Dashboard.\n\n"
+        f"You've been invited to join SOC Portal.\n\n"
         f"Click the link below to create your account:\n"
         f"{invite_url}\n\n"
         f"This link expires in 7 days and can only be used once.\n\n"
-        f"— KQL Dashboard Team"
+        f"— SOC Portal Team"
     )
 
     html_body = f"""\
 <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 480px; margin: 0 auto; padding: 24px;">
   <div style="text-align: center; margin-bottom: 24px;">
-    <span style="color: #13C636; font-size: 20px; font-weight: 700;">KQL Dashboard</span>
+    <span style="color: #13C636; font-size: 20px; font-weight: 700;">SOC Portal</span>
   </div>
   <p style="color: #333; font-size: 15px; line-height: 1.6;">Hi,</p>
   <p style="color: #333; font-size: 15px; line-height: 1.6;">
-    You've been invited to join <strong>KQL Dashboard</strong>.
+    You've been invited to join <strong>SOC Portal</strong>.
   </p>
   <div style="text-align: center; margin: 28px 0;">
     <a href="{invite_url}"
