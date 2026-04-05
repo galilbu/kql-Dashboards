@@ -10,7 +10,6 @@ from pydantic import BaseModel
 
 from middleware.auth import AuthenticatedUser, get_current_user
 from services.activity_service import log_activity
-from services.email_service import send_invite_email
 from services.mde_service import isolate_machine, unisolate_machine, find_machine_id
 from services.otp_service import create_otp, verify_otp
 from services.table_storage import get_table_client
